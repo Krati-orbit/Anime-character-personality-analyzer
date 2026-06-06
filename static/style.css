@@ -1338,6 +1338,51 @@ footer {
     }
 }
 
+/* Styling overrides during html2canvas capture to bypass CSS variable/gradient limitations */
+.html2canvas-capture {
+    background: #0f0f0f !important;
+    border-color: #333333 !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+}
 
+.html2canvas-capture * {
+    text-shadow: none !important;
+}
 
+.html2canvas-capture h1,
+.html2canvas-capture .result-title {
+    background: none !important;
+    -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important;
+}
 
+.html2canvas-capture h3,
+.html2canvas-capture h4,
+.html2canvas-capture .score-label,
+.html2canvas-capture .section-title-alt {
+    color: #ffffff !important;
+}
+
+.html2canvas-capture .description,
+.html2canvas-capture .result-anime,
+.html2canvas-capture .rival-desc,
+.html2canvas-capture .rival-anime,
+.html2canvas-capture .section-subtitle-alt {
+    color: #b0b0b0 !important;
+}
+
+.html2canvas-capture .trait-badge {
+    background: #222222 !important;
+    border-color: #555555 !important;
+    color: #ffffff !important;
+}
+
+.html2canvas-capture .rival-card {
+    background: #151515 !important;
+    border-color: #333333 !important;
+}
+
+.html2canvas-capture .score-value {
+    color: #ffffff !important;
+}

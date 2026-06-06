@@ -56,7 +56,7 @@
                 <div class="result-media">
                     <div class="result-image-wrapper">
                         <!-- We try to load the image. If it fails, handleImageError hides it and shows the fallback placeholder -->
-                        <img src="{{ character.image }}" alt="{{ character.name }}" class="result-image" id="char-img" referrerpolicy="no-referrer" onerror="handleImageError(this)">
+                        <img src="{{ character.image }}" alt="{{ character.name }}" class="result-image" id="char-img" referrerpolicy="no-referrer" crossorigin="anonymous" onerror="handleImageError(this)">
                         
                         <div class="result-image-placeholder" id="image-placeholder">
                             <span class="placeholder-emoji">{{ character.emoji }}</span>
@@ -126,7 +126,7 @@
                     <p class="section-subtitle-alt">This counterpart represents the maximum dimensional distance from your personality.</p>
                     <div class="rival-card">
                         <div class="rival-avatar-wrapper">
-                            <img src="{{ rival.image }}" alt="{{ rival.name }}" class="rival-avatar" referrerpolicy="no-referrer" onerror="handleRivalImageError(this)">
+                            <img src="{{ rival.image }}" alt="{{ rival.name }}" class="rival-avatar" referrerpolicy="no-referrer" crossorigin="anonymous" onerror="handleRivalImageError(this)">
                             <div class="rival-avatar-placeholder" id="rival-image-placeholder" style="display: none;">
                                 <span>{{ rival.emoji }}</span>
                             </div>
@@ -244,7 +244,9 @@
 
                     const target = document.querySelector('.result-card');
                     
-                    // Style overrides during capture to ensure transparent background is readable
+                    // Add the class to override CSS variables & transparent text gradients for html2canvas
+                    target.classList.add('html2canvas-capture');
+                    
                     const options = {
                         useCORS: true,
                         allowTaint: false,
@@ -256,21 +258,28 @@
                         }
                     };
 
-                    html2canvas(target, options).then(canvas => {
-                        const link = document.createElement('a');
-                        const charName = '{{ character.name }}'.toLowerCase().replace(/\s+/g, '-');
-                        link.download = `anime-personality-match-${charName}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
+                    // Delay slightly to allow class styles to apply before capturing
+                    setTimeout(() => {
+                        html2canvas(target, options).then(canvas => {
+                            // Remove class immediately after rendering
+                            target.classList.remove('html2canvas-capture');
 
-                        downloadBtn.disabled = false;
-                        downloadBtn.innerHTML = originalContent;
-                    }).catch(err => {
-                        console.error("html2canvas generation failed:", err);
-                        alert("Could not generate match card image. Please try again.");
-                        downloadBtn.disabled = false;
-                        downloadBtn.innerHTML = originalContent;
-                    });
+                            const link = document.createElement('a');
+                            const charName = '{{ character.name }}'.toLowerCase().replace(/\s+/g, '-');
+                            link.download = `anime-personality-match-${charName}.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+
+                            downloadBtn.disabled = false;
+                            downloadBtn.innerHTML = originalContent;
+                        }).catch(err => {
+                            target.classList.remove('html2canvas-capture');
+                            console.error("html2canvas generation failed:", err);
+                            alert("Could not generate match card image. Please try again.");
+                            downloadBtn.disabled = false;
+                            downloadBtn.innerHTML = originalContent;
+                        });
+                    }, 50);
                 });
             }
         });
