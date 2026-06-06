@@ -134,6 +134,38 @@ def result():
     )
 
 
+@app.route("/image_proxy")
+def image_proxy():
+    """
+    Proxies character image requests server-side to bypass CORS and hotlink protections.
+    """
+    url = request.args.get("url", "")
+    if not url:
+        return "Missing URL", 400
+        
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+                "Referer": "https://anilist.co/"
+            }
+        )
+        with urllib.request.urlopen(req) as response:
+            img_data = response.read()
+            content_type = response.headers.get("Content-Type", "image/jpeg")
+            
+        res = app.make_response(img_data)
+        res.headers.set("Content-Type", content_type)
+        res.headers.set("Access-Control-Allow-Origin", "*")
+        return res
+    except Exception as e:
+        logger.error(f"Error proxying image {url}: {e}")
+        return "Error loading image", 500
+
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return redirect(url_for("index"))

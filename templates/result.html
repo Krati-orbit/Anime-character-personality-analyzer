@@ -56,7 +56,7 @@
                 <div class="result-media">
                     <div class="result-image-wrapper">
                         <!-- We try to load the image. If it fails, handleImageError hides it and shows the fallback placeholder -->
-                        <img src="{{ character.image }}" alt="{{ character.name }}" class="result-image" id="char-img" referrerpolicy="no-referrer" crossorigin="anonymous" onerror="handleImageError(this)">
+                        <img src="{{ url_for('image_proxy', url=character.image) }}" alt="{{ character.name }}" class="result-image" id="char-img" referrerpolicy="no-referrer" onerror="handleImageError(this)">
                         
                         <div class="result-image-placeholder" id="image-placeholder">
                             <span class="placeholder-emoji">{{ character.emoji }}</span>
@@ -126,7 +126,7 @@
                     <p class="section-subtitle-alt">This counterpart represents the maximum dimensional distance from your personality.</p>
                     <div class="rival-card">
                         <div class="rival-avatar-wrapper">
-                            <img src="{{ rival.image }}" alt="{{ rival.name }}" class="rival-avatar" referrerpolicy="no-referrer" crossorigin="anonymous" onerror="handleRivalImageError(this)">
+                            <img src="{{ url_for('image_proxy', url=rival.image) }}" alt="{{ rival.name }}" class="rival-avatar" referrerpolicy="no-referrer" onerror="handleRivalImageError(this)">
                             <div class="rival-avatar-placeholder" id="rival-image-placeholder" style="display: none;">
                                 <span>{{ rival.emoji }}</span>
                             </div>
