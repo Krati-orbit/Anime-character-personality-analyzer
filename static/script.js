@@ -229,9 +229,9 @@ window.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("mouseenter", () => soundEffects.hover());
     });
 
-    const cachedName = sessionStorage.getItem("userName");
-    const cachedAge = sessionStorage.getItem("userAge");
-    const cachedGender = sessionStorage.getItem("userGender");
+    const cachedName = localStorage.getItem("userName");
+    const cachedAge = localStorage.getItem("userAge");
+    const cachedGender = localStorage.getItem("userGender");
     
     if (cachedName && cachedAge && cachedGender) {
         if (profileScreen) profileScreen.classList.add("hidden");
@@ -256,10 +256,10 @@ if (profileForm) {
             return;
         }
         
-        // Save details in browser session storage
-        sessionStorage.setItem("userName", name);
-        sessionStorage.setItem("userAge", age);
-        sessionStorage.setItem("userGender", gender);
+        // Save details in browser local storage for persistence across visits
+        localStorage.setItem("userName", name);
+        localStorage.setItem("userAge", age);
+        localStorage.setItem("userGender", gender);
         
         // Play transition sound
         soundEffects.transition();

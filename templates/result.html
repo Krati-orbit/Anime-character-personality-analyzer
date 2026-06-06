@@ -211,10 +211,10 @@
                 handleImageError(img);
             }
             
-            // Load user profile summary from sessionStorage if available
-            const name = sessionStorage.getItem("userName");
-            const age = sessionStorage.getItem("userAge");
-            const gender = sessionStorage.getItem("userGender");
+            // Load user profile summary from localStorage if available
+            const name = localStorage.getItem("userName");
+            const age = localStorage.getItem("userAge");
+            const gender = localStorage.getItem("userGender");
             
             if (name && age && gender) {
                 document.getElementById("summary-name").textContent = name;
