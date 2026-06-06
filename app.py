@@ -114,10 +114,12 @@ def result():
     # Get matched character prototype vector
     char_vector = CHARACTER_PROTOTYPES.get(char_slug, [0]*10)
     
-    # Get rival details if valid
-    rival_character = None
-    if rival_slug in characters_db:
-        rival_character = characters_db[rival_slug]
+    # Get rival details (calculate dynamically if missing from query params)
+    if not rival_slug or rival_slug not in characters_db:
+        import numpy as np
+        rival_slug, rival_score = get_rival_character(np.array(char_vector))
+        
+    rival_character = characters_db[rival_slug]
         
     return render_template(
         "result.html",
