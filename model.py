@@ -309,3 +309,35 @@ def predict_character(user_vector):
     match_percentage = max(50, min(99, match_percentage))
     
     return predicted_slug, match_percentage
+
+
+def get_rival_character(user_vector):
+    """
+    Find the character with the lowest cosine similarity to the user's vector.
+    Returns: (rival_slug, compatibility_percentage)
+    """
+    lowest_similarity = 2.0
+    rival_slug = None
+    
+    for slug, proto_list in CHARACTER_PROTOTYPES.items():
+        proto_vector = np.array(proto_list)
+        dot_product = np.dot(user_vector, proto_vector)
+        norm_user = np.linalg.norm(user_vector)
+        norm_proto = np.linalg.norm(proto_vector)
+        
+        if norm_user == 0 or norm_proto == 0:
+            sim = 0.0
+        else:
+            sim = dot_product / (norm_user * norm_proto)
+            
+        if sim < lowest_similarity:
+            lowest_similarity = sim
+            rival_slug = slug
+            
+    # Calculate a compatibility match score for rival (should be low, e.g. 20-50%)
+    rival_match_score = int(lowest_similarity * 100)
+    # Clip rival match percentage to 20-50% for good feel
+    rival_match_score = max(20, min(50, rival_match_score))
+    
+    return rival_slug, rival_match_score
+

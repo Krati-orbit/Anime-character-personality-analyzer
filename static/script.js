@@ -400,9 +400,12 @@ function submitQuiz() {
             const elapsed = Date.now() - startTime;
             const remainingDelay = Math.max(0, minLoadingTime - elapsed);
             
+            // Save computed user vector for rendering the Radar Chart
+            sessionStorage.setItem("userVector", JSON.stringify(data.user_vector));
+            
             // Wait for remaining loading time to finish before redirecting (avoids visual jarring)
             setTimeout(() => {
-                window.location.href = `/result?char=${data.character}&score=${data.score}`;
+                window.location.href = `/result?char=${data.character}&score=${data.score}&rival=${data.rival}&rival_score=${data.rival_score}`;
             }, remainingDelay);
         } else {
             throw new Error(data.error || "Unknown server response.");

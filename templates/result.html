@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Chart.js for 10D Trait Radar Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             /* Dynamically set the character's accent color as the primary color for this page view */
@@ -104,6 +106,42 @@
                 </div>
             </div>
 
+            <!-- Interactive Analytics & Rivalry Section -->
+            <div class="analytics-rivalry-section">
+                <!-- 10D Personality Radar Chart -->
+                <div class="chart-container-wrapper">
+                    <h3 class="section-title-alt">Personality Vector Comparison</h3>
+                    <p class="section-subtitle-alt">Comparing your calculated trait dimensions with the matched counterpart profile.</p>
+                    <div class="chart-container">
+                        <canvas id="radar-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Anime Rival Card -->
+                {% if rival %}
+                <div class="rival-card-container">
+                    <h3 class="section-title-alt">Your Anime Rival</h3>
+                    <p class="section-subtitle-alt">This counterpart represents the maximum dimensional distance from your personality.</p>
+                    <div class="rival-card">
+                        <div class="rival-avatar-wrapper">
+                            <img src="{{ rival.image }}" alt="{{ rival.name }}" class="rival-avatar" referrerpolicy="no-referrer" onerror="handleRivalImageError(this)">
+                            <div class="rival-avatar-placeholder" id="rival-image-placeholder" style="display: none;">
+                                <span>{{ rival.emoji }}</span>
+                            </div>
+                        </div>
+                        <div class="rival-info">
+                            <h4 class="rival-name">{{ rival.name }}</h4>
+                            <span class="rival-anime">from {{ rival.anime }}</span>
+                            <div class="rival-score-badge">
+                                Compatibility: <span class="rival-score-num">{{ rival_score }}%</span>
+                            </div>
+                            <p class="rival-desc">{{ rival.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
             <div class="action-bar">
                 <a href="{{ url_for('index') }}" class="btn btn-secondary">
                     <span>Retake Quiz</span>
@@ -182,7 +220,135 @@
             
             // Play victory chime with a tiny delay to ensure audio context is active
             setTimeout(playSuccess, 200);
+            
+            // Initialize the Radar Chart comparing user vector to character prototype
+            initRadarChart();
         });
+
+        // Fallback for rival avatar load error
+        function handleRivalImageError(img) {
+            img.style.display = 'none';
+            const placeholder = document.getElementById('rival-image-placeholder');
+            if (placeholder) {
+                placeholder.style.display = 'flex';
+            }
+        }
+
+        function initRadarChart() {
+            const charVector = {{ char_vector | tojson }};
+            let userVector = null;
+            
+            try {
+                userVector = JSON.parse(sessionStorage.getItem("userVector"));
+            } catch (e) {
+                console.warn("Could not load userVector from sessionStorage:", e);
+            }
+            
+            // Fallback userVector if session storage is empty or invalid
+            if (!userVector || !Array.isArray(userVector) || userVector.length !== 10) {
+                // Generate a close profile with slight random noise for display purposes
+                userVector = charVector.map(val => Math.max(0.1, Math.min(0.9, val + (Math.random() - 0.5) * 0.15)));
+            }
+            
+            const traitLabels = [
+                "Extraversion", "Intellect", "Discipline", "Empathy", "Determination",
+                "Aggression", "Optimism", "Mysteriousness", "Pride", "Sacrifice"
+            ];
+            
+            const canvas = document.getElementById('radar-chart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const accentColor = '{{ character.color }}';
+            const rgbColor = '{{ rgb_color }}';
+            
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: traitLabels,
+                    datasets: [
+                        {
+                            label: 'Your Traits',
+                            data: userVector,
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            borderColor: 'rgba(255, 255, 255, 0.9)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#0a0a0a',
+                            pointHoverBackgroundColor: '#ffffff',
+                            pointHoverBorderColor: 'rgba(255, 255, 255, 1)',
+                            pointRadius: 4
+                        },
+                        {
+                            label: '{{ character.name }} (Prototype)',
+                            data: charVector,
+                            backgroundColor: `rgba(${rgbColor}, 0.25)`,
+                            borderColor: accentColor,
+                            borderWidth: 2,
+                            pointBackgroundColor: accentColor,
+                            pointBorderColor: '#0a0a0a',
+                            pointHoverBackgroundColor: accentColor,
+                            pointHoverBorderColor: accentColor,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: 'rgba(255, 255, 255, 0.08)'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.08)'
+                            },
+                            pointLabels: {
+                                color: '#b0b0b0',
+                                font: {
+                                    family: "'Outfit', 'Inter', sans-serif",
+                                    size: 11,
+                                    weight: '500'
+                                }
+                            },
+                            ticks: {
+                                display: false,
+                                stepSize: 0.2
+                            },
+                            min: 0,
+                            max: 1.0
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                boxWidth: 12,
+                                padding: 15,
+                                font: {
+                                    family: "'Outfit', sans-serif",
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e0e0e0',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.dataset.label}: ${(context.raw * 100).toFixed(0)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 
 </body>

@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 import json
 import os
 import logging
-from model import get_user_vector, predict_character
+from model import get_user_vector, predict_character, get_rival_character, CHARACTER_PROTOTYPES
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -47,13 +47,17 @@ def predict():
         
         # Predict character and match percentage using ML model
         predicted_slug, match_percentage = predict_character(user_vector)
+        rival_slug, rival_score = get_rival_character(user_vector)
         
         logger.info(f"Quiz completed. Matched user with: {predicted_slug} ({match_percentage}%)")
         
         return jsonify({
             "success": True,
             "character": predicted_slug,
-            "score": match_percentage
+            "score": match_percentage,
+            "rival": rival_slug,
+            "rival_score": rival_score,
+            "user_vector": user_vector.tolist() if hasattr(user_vector, 'tolist') else list(user_vector)
         })
         
     except ValueError as ve:
@@ -70,10 +74,12 @@ def predict():
 def result():
     """
     Renders the result page for the matched character.
-    Query parameters: char=<slug>&score=<int>
+    Query parameters: char=<slug>&score=<int>&rival=<slug>&rival_score=<int>
     """
     char_slug = request.args.get("char", "").lower()
     score_str = request.args.get("score", "0")
+    rival_slug = request.args.get("rival", "").lower()
+    rival_score_str = request.args.get("rival_score", "0")
     
     if not char_slug or char_slug not in characters_db:
         logger.warning(f"Access to result page with invalid character slug: '{char_slug}'")
@@ -86,6 +92,13 @@ def result():
     except ValueError:
         score = 75  # Default fallback
         
+    try:
+        rival_score = int(rival_score_str)
+        if not (0 <= rival_score <= 100):
+            rival_score = 35
+    except ValueError:
+        rival_score = 35
+
     character_info = characters_db[char_slug]
     
     # Extract hex color and convert to RGB values (e.g. "#ff6600" -> "255, 102, 0")
@@ -98,12 +111,24 @@ def result():
     except Exception:
         rgb_color = "255, 255, 255"  # Fallback to white
     
+    # Get matched character prototype vector
+    char_vector = CHARACTER_PROTOTYPES.get(char_slug, [0]*10)
+    
+    # Get rival details if valid
+    rival_character = None
+    if rival_slug in characters_db:
+        rival_character = characters_db[rival_slug]
+        
     return render_template(
         "result.html",
         character=character_info,
         score=score,
         slug=char_slug,
-        rgb_color=rgb_color
+        rgb_color=rgb_color,
+        char_vector=char_vector,
+        rival=rival_character,
+        rival_score=rival_score,
+        rival_slug=rival_slug
     )
 
 

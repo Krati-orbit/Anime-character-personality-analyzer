@@ -1176,5 +1176,168 @@ footer {
     background: radial-gradient(circle at center, rgba(10, 10, 10, 0.88) 0%, rgba(10, 10, 10, 0.6) 45%, rgba(10, 10, 10, 0.0) 70%);
 }
 
+/* ==========================================================================
+   ANALYTICS & RIVALRY STYLING
+   ========================================================================== */
+.analytics-rivalry-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 48px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 40px;
+}
+
+.chart-container-wrapper, 
+.rival-card-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.section-title-alt {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    text-align: left;
+}
+
+.section-subtitle-alt {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.4;
+}
+
+.chart-container {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 24px;
+    height: 320px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Rival Card Layout */
+.rival-card {
+    background: linear-gradient(135deg, rgba(255, 34, 34, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 34, 34, 0.15);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    gap: 24px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    height: 320px;
+    align-items: flex-start;
+    transition: all var(--transition-normal);
+}
+
+.rival-card:hover {
+    border-color: rgba(255, 34, 34, 0.45);
+    box-shadow: 0 15px 35px rgba(255, 34, 34, 0.05), 0 0 25px rgba(255, 34, 34, 0.05);
+}
+
+.rival-avatar-wrapper {
+    width: 100px;
+    height: 100px;
+    border-radius: 16px;
+    border: 2px solid #ff2222;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 15px rgba(255, 34, 34, 0.15);
+}
+
+.rival-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rival-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    background: #151515;
+}
+
+.rival-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.rival-name {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 2px;
+}
+
+.rival-anime {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.rival-score-badge {
+    align-self: flex-start;
+    padding: 4px 12px;
+    background: rgba(255, 34, 34, 0.1);
+    border: 1px solid rgba(255, 34, 34, 0.2);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #ff4444;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rival-desc {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* Mobile adjustments for new section */
+@media (max-width: 850px) {
+    .analytics-rivalry-section {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        margin-top: 36px;
+        padding-top: 30px;
+    }
+    .rival-card {
+        height: auto;
+    }
+}
+
+@media (max-width: 500px) {
+    .rival-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .rival-score-badge {
+        align-self: center;
+    }
+}
+
+
 
 
