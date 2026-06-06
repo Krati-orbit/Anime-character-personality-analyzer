@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <!-- Chart.js for 10D Trait Radar Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2canvas for Download Match Card -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             /* Dynamically set the character's accent color as the primary color for this page view */
@@ -142,7 +144,10 @@
                 {% endif %}
             </div>
 
-            <div class="action-bar">
+            <div class="action-bar" style="gap: 16px; flex-wrap: wrap;">
+                <button id="download-card-btn" class="btn btn-primary btn-glow">
+                    <span>Download Match Card</span>
+                </button>
                 <a href="{{ url_for('index') }}" class="btn btn-secondary">
                     <span>Retake Quiz</span>
                 </a>
@@ -223,6 +228,51 @@
             
             // Initialize the Radar Chart comparing user vector to character prototype
             initRadarChart();
+
+            // Bind click event for Download Match Card button
+            const downloadBtn = document.getElementById('download-card-btn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    // Play synthesizer selection chime if sounds are enabled
+                    if (typeof playSynthSound === 'function') {
+                        playSynthSound(440, 880, 'sine', 0.04, 0.25);
+                    }
+
+                    const originalContent = downloadBtn.innerHTML;
+                    downloadBtn.disabled = true;
+                    downloadBtn.innerHTML = '<span>Capturing Card...</span>';
+
+                    const target = document.querySelector('.result-card');
+                    
+                    // Style overrides during capture to ensure transparent background is readable
+                    const options = {
+                        useCORS: true,
+                        allowTaint: false,
+                        backgroundColor: '#0c0c0c', // Dark backdrop color for screenshot export
+                        scale: 2, // Retina scaling for crisp resolution
+                        ignoreElements: (el) => {
+                            // Don't render the action buttons inside the PNG export
+                            return el.classList.contains('action-bar');
+                        }
+                    };
+
+                    html2canvas(target, options).then(canvas => {
+                        const link = document.createElement('a');
+                        const charName = '{{ character.name }}'.toLowerCase().replace(/\s+/g, '-');
+                        link.download = `anime-personality-match-${charName}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+
+                        downloadBtn.disabled = false;
+                        downloadBtn.innerHTML = originalContent;
+                    }).catch(err => {
+                        console.error("html2canvas generation failed:", err);
+                        alert("Could not generate match card image. Please try again.");
+                        downloadBtn.disabled = false;
+                        downloadBtn.innerHTML = originalContent;
+                    });
+                });
+            }
         });
 
         // Fallback for rival avatar load error
