@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find out which anime character matches your personality! Powered by a Machine Learning KNN classification model.">
+    <title>Anime Character Personality Analyzer</title>
+    <!-- Modern Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <!-- Immersive looping ambient background video -->
+    <div class="video-bg-container">
+        <video autoplay loop muted playsinline class="video-bg">
+            <source src="https://raw.githubusercontent.com/avinash201199/stopwatch/master/lofi.mp4" type="video/mp4">
+        </video>
+        <div class="video-bg-overlay"></div>
+    </div>
+
+    <div class="glow-orb" id="orb-left"></div>
+    <div class="glow-orb" id="orb-right"></div>
+    <div class="audio-toggle-container">
+        <button id="sound-toggle-btn" class="sound-toggle-btn" title="Toggle Soundwaves">
+            <span class="sound-icon" id="sound-icon">🔊</span>
+            <span class="sound-status-text">SOUNDS ON</span>
+        </button>
+    </div>
+
+    <main class="app-container">
+        <!-- User Profile Registration Screen -->
+        <section id="profile-screen" class="card fade-in">
+            <header class="app-header">
+                <div class="logo-badge">INITIALIZATION</div>
+                <h1>Create Your Profile</h1>
+                <p class="subtitle">Enter your details to calibrate the personality analyzer.</p>
+            </header>
+            
+            <form id="profile-form" class="profile-form">
+                <div class="form-group">
+                    <label for="username-input">Your Name</label>
+                    <input type="text" id="username-input" placeholder="e.g. Naruto Uzumaki" required maxlength="30" autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userage-input">Your Age</label>
+                        <input type="number" id="userage-input" placeholder="e.g. 17" required min="1" max="120">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usergender-input">Your Gender</label>
+                        <select id="usergender-input" required>
+                            <option value="" disabled selected>Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Secret">Prefer not to say</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button type="submit" class="btn btn-primary btn-glow">
+                        <span>Save & Proceed</span>
+                        <svg class="icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Landing Screen -->
+        <section id="landing-screen" class="card hidden">
+            <header class="app-header">
+                <div class="logo-badge">ML CLASSIFIER</div>
+                <h1>Anime Character Personality Analyzer</h1>
+                <p class="subtitle">Discover your inner anime counterpart through advanced Machine Learning.</p>
+            </header>
+            
+            <div class="landing-content">
+                <p>Answer <strong>10 personality questions</strong> designed to build your custom 10-dimensional trait vector. Our <strong>K-Nearest Neighbors (KNN)</strong> algorithm will project your profile into character space and match you with one of these iconic legends:</p>
+                
+                <h3 class="section-title">Eligible Counterparts</h3>
+                <div class="character-preview-grid">
+                    <!-- Naruto -->
+                    <div class="char-preview-card" style="--char-color: #ff6600">
+                        <div class="card-glow"></div>
+                        <div class="card-main">
+                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b17-phjcWCkRuIhu.png" alt="Naruto" class="char-avatar" referrerpolicy="no-referrer">
+                            <div class="char-info">
+                                <span class="char-name">Naruto Uzumaki</span>
+                                <span class="char-show">from Naruto</span>
+                            </div>
+                        </div>
+                        <div class="card-hover-details">
+                            <p>Energetic ninja with an iron will who never gives up on his friends.</p>
+                            <div class="card-mini-traits">
+                                <span>Energetic</span><span>Friendly</span><span>Optimistic</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Itachi -->
+                    <div class="char-preview-card" style="--char-color: #aa44ff">
+                        <div class="card-glow"></div>
+                        <div class="card-main">
+                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b14-9Kb1E5oel1ke.png" alt="Itachi" class="char-avatar" referrerpolicy="no-referrer">
+                            <div class="char-info">
+                                <span class="char-name">Itachi Uchiha</span>
+                                <span class="char-show">from Naruto</span>
+                            </div>
+                        </div>
+                        <div class="card-hover-details">
+                            <p>Silent Uchiha genius who sacrificed his life and pride to protect peace.</p>
+                            <div class="card-mini-traits">
+                                <span>Calm</span><span>Intelligent</span><span>Strategic</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Goku -->
+                    <div class="char-preview-card" style="--char-color: #ffdd00">
+                        <div class="card-glow"></div>
+                        <div class="card-main">
+                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/246-wsRRr6z1kii8.png" alt="Goku" class="char-avatar" referrerpolicy="no-referrer">
+                            <div class="char-info">
+                                <span class="char-name">Goku</span>
+                                <span class="char-show">from Dragon Ball Z</span>
+                            </div>
+                        </div>
+                        <div class="card-hover-details">
+                            <p>Carefree Saiyan warrior motivated by pushing limits and fighting the strong.</p>
+                            <div class="card-mini-traits">
+                                <span>Strong</span><span>Pure-hearted</span><span>Simple</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Light Yagami -->
+                    <div class="char-preview-card" style="--char-color: #ff2222">
+                        <div class="card-glow"></div>
+                        <div class="card-main">
+                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b80-26EhwSsSqQ50.png" alt="Light" class="char-avatar" referrerpolicy="no-referrer">
+                            <div class="char-info">
+                                <span class="char-name">Light Yagami</span>
+                                <span class="char-show">from Death Note</span>
+                            </div>
+                        </div>
+                        <div class="card-hover-details">
+                            <p>Calculative genius with a prideful god-complex enforcing absolute justice.</p>
+                            <div class="card-mini-traits">
+                                <span>Genius</span><span>Manipulative</span><span>Proud</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Luffy -->
+                    <div class="char-preview-card" style="--char-color: #ff4444">
+                        <div class="card-glow"></div>
+                        <div class="card-main">
+                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b40-MNypXsxSRb1R.png" alt="Luffy" class="char-avatar" referrerpolicy="no-referrer">
+                            <div class="char-info">
+                                <span class="char-name">Monkey D. Luffy</span>
+                                <span class="char-show">from One Piece</span>
+                            </div>
+                        </div>
+                        <div class="card-hover-details">
+                            <p>Free-spirited pirate captain chasing the ultimate dream of freedom.</p>
+                            <div class="card-mini-traits">
+                                <span>Free-spirited</span><span>Loyal</span><span>Determined</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Levi -->
+                    <div class="char-preview-card" style="--char-color: #4488ff">
+                        <div class="card-glow"></div>
+                        <div class="card-main">
+                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b40733-9HSPh4CKOMqA.png" alt="Levi" class="char-avatar" referrerpolicy="no-referrer">
+                            <div class="char-info">
+                                <span class="char-name">Levi Ackerman</span>
+                                <span class="char-show">from Attack on Titan</span>
+                            </div>
+                        </div>
+                        <div class="card-hover-details">
+                            <p>Humanity's strongest soldier: stoic, clean-obsessed, and fiercely protective.</p>
+                            <div class="card-mini-traits">
+                                <span>Disciplined</span><span>Cold</span><span>Protective</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ML Lab Panel -->
+                <div class="ml-lab-panel">
+                    <div class="panel-header">
+                        <span class="panel-header-icon">⚙️</span>
+                        <h4>ML CLASSIFIER CALIBRATION STATUS</h4>
+                    </div>
+                    <div class="ml-stats-grid">
+                        <div class="ml-stat-item">
+                            <span class="stat-value font-mono">KNN Classifier</span>
+                            <span class="stat-label">Model Algorithm (k=3)</span>
+                        </div>
+                        <div class="ml-stat-item">
+                            <span class="stat-value font-mono">95.75%</span>
+                            <span class="stat-label">Calibration Accuracy</span>
+                        </div>
+                        <div class="ml-stat-item">
+                            <span class="stat-value font-mono">10 Traits</span>
+                            <span class="stat-label">Feature Vector Mapping</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button id="start-btn" class="btn btn-primary btn-glow">
+                    <span>Begin Analysis</span>
+                    <svg class="icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Quiz Screen -->
+        <section id="quiz-screen" class="card hidden">
+            <header class="quiz-header">
+                <div class="quiz-meta">
+                    <span id="question-counter">Question 1 of 10</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar-fill" class="progress-bar-fill" style="width: 10%;"></div>
+                </div>
+            </header>
+
+            <div id="quiz-body" class="quiz-body">
+                <h2 id="question-text" class="question-text">Loading question...</h2>
+                <div id="options-container" class="options-container">
+                    <!-- Option buttons will be dynamically generated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Screen -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-card">
+                <div class="chakra-ring-container">
+                    <div class="chakra-ring outer"></div>
+                    <div class="chakra-ring middle"></div>
+                    <div class="chakra-ring inner"></div>
+                    <div class="chakra-center">⚡</div>
+                </div>
+                <h3 id="loading-title">Syncing Personality Vectors</h3>
+                <p id="loading-status" class="loading-status">Analyzing traits...</p>
+                <div class="pulse-bar"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built with Python + Flask + Scikit-Learn (KNN Classifier)</p>
+    </footer>
+
+    <!-- Quiz Question Data & Control Logic -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

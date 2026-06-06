@@ -1,0 +1,62 @@
+{
+  "naruto": {
+    "name": "Naruto Uzumaki",
+    "anime": "Naruto",
+    "emoji": "🦊",
+    "color": "#ff6600",
+    "quote": "I'm not gonna run away, I never go back on my word! That's my nindo: my ninja way!",
+    "image": "https://s4.anilist.co/file/anilistcdn/character/large/b17-phjcWCkRuIhu.png",
+    "traits": ["Energetic", "Never gives up", "Friendly", "Loud", "Optimistic"],
+    "description": "An energetic ninja who has suffered exclusion but holds a heart of gold. His unyielding determination and capacity to build bonds of friendship inspire everyone around him."
+  },
+  "itachi": {
+    "name": "Itachi Uchiha",
+    "anime": "Naruto",
+    "emoji": "🐦",
+    "color": "#aa44ff",
+    "quote": "It is not because they become Hokage that everyone acknowledges them. It is because everyone acknowledges them that they become Hokage.",
+    "image": "https://s4.anilist.co/file/anilistcdn/character/large/b14-9Kb1E5oel1ke.png",
+    "traits": ["Calm", "Intelligent", "Mysterious", "Sacrificing", "Strategic"],
+    "description": "A silent genius who shouldered a dark burden in secret to save his village and younger brother. He is profoundly calm, strategic, and willing to sacrifice himself."
+  },
+  "goku": {
+    "name": "Goku",
+    "anime": "Dragon Ball Z",
+    "emoji": "🐒",
+    "color": "#ffdd00",
+    "quote": "I am the hope of the universe. I am the answer to all living things that cry out for peace.",
+    "image": "https://s4.anilist.co/file/anilistcdn/character/large/246-wsRRr6z1kii8.png",
+    "traits": ["Carefree", "Strong", "Pure-hearted", "Battle-lover", "Simple"],
+    "description": "A pure-hearted Saiyan warrior whose primary drives are fighting strong opponents and protecting the earth. He is carefree, incredibly strong, and simple-minded."
+  },
+  "light": {
+    "name": "Light Yagami",
+    "anime": "Death Note",
+    "emoji": "🍎",
+    "color": "#ff2222",
+    "quote": "This world is rotten, and those who are making it rotten deserve to die. Someone has to do it!",
+    "image": "https://s4.anilist.co/file/anilistcdn/character/large/b80-26EhwSsSqQ50.png",
+    "traits": ["Genius", "Manipulative", "Justice-obsessed", "Calculative", "Proud"],
+    "description": "An exceptionally brilliant high school student who obtains a notebook that kills anyone whose name is written in it. He uses it to clean up the world under the moniker 'Kira' with calculative pride."
+  },
+  "luffy": {
+    "name": "Monkey D. Luffy",
+    "anime": "One Piece",
+    "emoji": "👒",
+    "color": "#ff4444",
+    "quote": "If you don't take risks, you can't create a future!",
+    "image": "https://s4.anilist.co/file/anilistcdn/character/large/b40-MNypXsxSRb1R.png",
+    "traits": ["Free-spirited", "Loyal", "Reckless", "Fun", "Determined"],
+    "description": "The captain of the Straw Hat Pirates, who is determined to find the legendary One Piece and become the King of the Pirates. He is completely free-spirited, fiercely loyal, and reckless in battle."
+  },
+  "levi": {
+    "name": "Levi Ackerman",
+    "anime": "Attack on Titan",
+    "emoji": "⚔️",
+    "color": "#4488ff",
+    "quote": "The only thing we're allowed to do... is to believe that we won't regret the choice we made.",
+    "image": "https://s4.anilist.co/file/anilistcdn/character/large/b40733-9HSPh4CKOMqA.png",
+    "traits": ["Disciplined", "Cold", "Hardworking", "Perfectionist", "Protective"],
+    "description": "Humanity's strongest soldier. Although stoic, cold, and a total clean-freak, he is deeply protective of his comrades and holds a disciplined, unwavering sense of duty."
+  }
+}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Quiz Result: Matched with {{ character.name }} ({{ score }}% Match)">
+    <title>Your Match: {{ character.name }} - Personality Analyzer</title>
+    <!-- Modern Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            /* Dynamically set the character's accent color as the primary color for this page view */
+            --accent-color: {{ character.color }};
+            --accent-glow: rgba({{ rgb_color }}, 0.35);
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <!-- Immersive looping ambient background video -->
+    <div class="video-bg-container">
+        <video autoplay loop muted playsinline class="video-bg">
+            <source src="https://raw.githubusercontent.com/avinash201199/stopwatch/master/lofi.mp4" type="video/mp4">
+        </video>
+        <div class="video-bg-overlay"></div>
+    </div>
+
+    <div class="glow-orb" id="orb-left" style="background: var(--accent-glow);"></div>
+    <div class="glow-orb" id="orb-right" style="background: var(--accent-glow);"></div>
+
+    <main class="app-container">
+        <section class="card result-card fade-in">
+            <header class="result-header">
+                <div class="logo-badge" style="background: var(--accent-color); color: #000; font-weight: 800;">MATCH MATCHED</div>
+                <h1 class="result-title">{{ character.name }}</h1>
+                <p class="result-anime">from <span>{{ character.anime }}</span></p>
+                
+                <div class="user-profile-summary" id="user-profile-summary" style="display: none; margin-top: 20px;">
+                    <span>Report for: <strong id="summary-name">User</strong></span>
+                    <span>•</span>
+                    <span>Age: <strong id="summary-age">N/A</strong></span>
+                    <span>•</span>
+                    <span>Gender: <strong id="summary-gender">N/A</strong></span>
+                </div>
+            </header>
+
+            <div class="result-grid">
+                <!-- Image Section with Fallback -->
+                <div class="result-media">
+                    <div class="result-image-wrapper">
+                        <!-- We try to load the image. If it fails, handleImageError hides it and shows the fallback placeholder -->
+                        <img src="{{ character.image }}" alt="{{ character.name }}" class="result-image" id="char-img" referrerpolicy="no-referrer" onerror="handleImageError(this)">
+                        
+                        <div class="result-image-placeholder" id="image-placeholder">
+                            <span class="placeholder-emoji">{{ character.emoji }}</span>
+                            <span class="placeholder-text">Photo Space</span>
+                            <span class="placeholder-hint">Add it to {{ character.image }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="match-score-card">
+                        <div class="score-circle">
+                            <svg class="score-ring" viewBox="0 0 100 100">
+                                <circle class="ring-bg" cx="50" cy="50" r="45"></circle>
+                                <circle class="ring-fill" cx="50" cy="50" r="45" style="stroke-dashoffset: calc(283 - (283 * {{ score }}) / 100); stroke: var(--accent-color);"></circle>
+                            </svg>
+                            <div class="score-value">
+                                <span class="num">{{ score }}</span>
+                                <span class="percent">%</span>
+                            </div>
+                        </div>
+                        <p class="score-label">Compatibility Score</p>
+                    </div>
+                </div>
+
+                <!-- Profile Stats Section -->
+                <div class="result-profile">
+                    <div class="profile-section">
+                        <h3>Character Profile</h3>
+                        <p class="description">{{ character.description }}</p>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Signature Traits</h3>
+                        <div class="traits-container">
+                            {% for trait in character.traits %}
+                            <span class="trait-badge" style="background: rgba({{ rgb_color }}, 0.15); border-color: var(--accent-color);">
+                                {{ trait }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="profile-section quote-section">
+                        <h3>Iconic Quote</h3>
+                        <blockquote class="character-quote" style="border-left-color: var(--accent-color);">
+                            <span class="quote-mark">“</span>
+                            <p>{{ character.quote }}</p>
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <span>Retake Quiz</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Built with Python + Flask + Scikit-Learn (KNN Classifier)</p>
+    </footer>
+
+    <script>
+        // Web Audio synth for victory chimes
+        let audioCtx = null;
+        const soundEnabled = localStorage.getItem("soundEnabled") !== "false";
+
+        function playSynthSound(freqStart, freqEnd, type, volume, duration) {
+            if (!soundEnabled) return;
+            try {
+                audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
+                if (freqEnd && freqEnd !== freqStart) {
+                    osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
+                }
+                gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.warn("Audio chime skipped:", e);
+            }
+        }
+
+        function playSuccess() {
+            setTimeout(() => playSynthSound(523.25, 523.25, 'sine', 0.04, 0.35), 0);   // C5
+            setTimeout(() => playSynthSound(659.25, 659.25, 'sine', 0.04, 0.35), 100); // E5
+            setTimeout(() => playSynthSound(783.99, 783.99, 'sine', 0.04, 0.45), 200); // G5
+        }
+
+        // If character image fails to load, gracefully display the placeholder block
+        function handleImageError(img) {
+            img.style.display = 'none';
+            const placeholder = document.getElementById('image-placeholder');
+            if (placeholder) {
+                placeholder.style.display = 'flex';
+            }
+        }
+        
+        // Ensure character image loading triggers fallback correctly if empty or null
+        window.addEventListener('DOMContentLoaded', () => {
+            const img = document.getElementById('char-img');
+            if (img && (!img.getAttribute('src') || img.getAttribute('src') === "")) {
+                handleImageError(img);
+            }
+            
+            // Load user profile summary from sessionStorage if available
+            const name = sessionStorage.getItem("userName");
+            const age = sessionStorage.getItem("userAge");
+            const gender = sessionStorage.getItem("userGender");
+            
+            if (name && age && gender) {
+                document.getElementById("summary-name").textContent = name;
+                document.getElementById("summary-age").textContent = age;
+                document.getElementById("summary-gender").textContent = gender;
+                document.getElementById("user-profile-summary").style.display = "inline-flex";
+            }
+            
+            // Play victory chime with a tiny delay to ensure audio context is active
+            setTimeout(playSuccess, 200);
+        });
+    </script>
+
+</body>
+</html>
