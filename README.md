@@ -10,7 +10,7 @@ pinned: false
 
 # Anime Character Personality Analyzer 🧪✨
 
-A premium, modern web application that analyzes your personality through a 10-question quiz and matches you with an iconic anime character. Under the hood, it projects your choices into a 10-dimensional personality trait vector and classifies it using a **K-Nearest Neighbors (KNN) Machine Learning model (n_neighbors=3)**.
+A premium, modern web application that analyzes your personality through a 10-question quiz and matches you with an iconic anime character. Under the hood, it projects your choices into a 10-dimensional personality trait vector and classifies it using a **K-Nearest Neighbors (KNN) Machine Learning model (n_neighbors=3)**.Here's the link of my deployed project " https://huggingface.co/spaces/krati-orbit/Anime-character-personality-analyzer".
 
 ---
 
