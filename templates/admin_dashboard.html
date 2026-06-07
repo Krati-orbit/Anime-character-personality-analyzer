@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Dashboard - Personality Analyzer logs">
+    <title>Admin Intel Console - Personality Analyzer</title>
+    <!-- Modern Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <!-- Immersive looping ambient background video -->
+    <div class="video-bg-container">
+        <video autoplay loop muted playsinline class="video-bg">
+            <source src="https://raw.githubusercontent.com/avinash201199/stopwatch/master/lofi.mp4" type="video/mp4">
+        </video>
+        <div class="video-bg-overlay"></div>
+    </div>
+
+    <!-- Glowing cyber-themed orbs -->
+    <div class="glow-orb" id="orb-left" style="background: rgba(0, 255, 136, 0.12);"></div>
+    <div class="glow-orb" id="orb-right" style="background: rgba(0, 187, 255, 0.12);"></div>
+
+    <main class="app-container" style="max-width: 1050px; margin: 40px auto;">
+        <section class="card admin-dashboard-card fade-in">
+            <header class="app-header">
+                <div class="logo-badge" style="border-color: #00ff88; color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);">SYSTEM ADMIN</div>
+                <h1>Intelligence Dashboard</h1>
+                <p class="subtitle">Real-time telemetry and character alignment profile logs of all test participants.</p>
+            </header>
+
+            <!-- Metrics Panel -->
+            <div class="admin-stats-container">
+                <div class="admin-stat-box">
+                    <span class="stat-num" id="stat-total">{{ total_count }}</span>
+                    <span class="stat-lbl">Total Submissions</span>
+                </div>
+                <div class="admin-stat-box">
+                    <span class="stat-num" id="stat-unique">-</span>
+                    <span class="stat-lbl">Unique Matches</span>
+                </div>
+                <div class="admin-stat-box">
+                    <span class="stat-num" id="stat-avg-compatibility">-</span>
+                    <span class="stat-lbl">Avg Compatibility</span>
+                </div>
+            </div>
+
+            <!-- Toolbar containing Search Filter and Actions -->
+            <div class="admin-toolbar">
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="admin-search-input" placeholder="Filter by name, age, gender, or character..." autocomplete="off">
+                </div>
+                <div class="toolbar-actions">
+                    <button id="export-csv-btn" class="btn btn-secondary" style="padding: 12px 20px; font-size: 0.9rem; border-radius: 8px;">
+                        <span>📥 Export Logs</span>
+                    </button>
+                    <a href="{{ url_for('admin_logout') }}" class="btn btn-primary" style="padding: 12px 20px; font-size: 0.9rem; border-radius: 8px; background: #ff2222; color: #ffffff; box-shadow: 0 4px 15px rgba(255, 34, 34, 0.25);">
+                        <span>Log Out</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Scrollable Table Container -->
+            <div class="admin-table-container">
+                <table class="admin-table" id="logs-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="date">Date & Time <span class="sort-indicator">↕</span></th>
+                            <th class="sortable" data-sort="name">Participant Name <span class="sort-indicator">↕</span></th>
+                            <th class="sortable" data-sort="age" style="text-align: center;">Age <span class="sort-indicator">↕</span></th>
+                            <th>Gender</th>
+                            <th class="sortable" data-sort="character">Matched Character <span class="sort-indicator">↕</span></th>
+                            <th class="sortable" data-sort="score" style="text-align: center;">Similarity <span class="sort-indicator">↕</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body">
+                        {% if users %}
+                            {% for user in users %}
+                            <tr class="log-row">
+                                <td class="font-mono text-muted date-cell" data-val="{{ user.timestamp }}">{{ user.timestamp }}</td>
+                                <td class="font-bold text-primary name-cell">{{ user.name }}</td>
+                                <td class="font-mono age-cell" style="text-align: center;" data-val="{{ user.age }}">{{ user.age }}</td>
+                                <td>
+                                    <span class="gender-badge gender-{{ user.gender | lower }}">{{ user.gender }}</span>
+                                </td>
+                                <td>
+                                    {% set char_lower = user.matched_character | lower %}
+                                    {% if char_lower == 'naruto' %}
+                                        {% set badge_color = '#ff6600' %}
+                                    {% elif char_lower == 'itachi' %}
+                                        {% set badge_color = '#aa44ff' %}
+                                    {% elif char_lower == 'goku' %}
+                                        {% set badge_color = '#ffdd00' %}
+                                    {% elif char_lower == 'light' %}
+                                        {% set badge_color = '#ff2222' %}
+                                    {% elif char_lower == 'luffy' %}
+                                        {% set badge_color = '#ff4444' %}
+                                    {% elif char_lower == 'levi' %}
+                                        {% set badge_color = '#4488ff' %}
+                                    {% else %}
+                                        {% set badge_color = '#ffffff' %}
+                                    {% endif %}
+                                    <span class="character-badge" style="--badge-color: {{ badge_color }};">{{ user.matched_character }}</span>
+                                </td>
+                                <td class="font-mono text-glow score-cell" style="text-align: center;" data-val="{{ user.compatibility_score | replace('%', '') | int }}">{{ user.compatibility_score }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr class="empty-row">
+                                <td colspan="6" style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                                    ⚠️ No participants logged in the system yet.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer-Return Button -->
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="font-size: 0.85rem; padding: 10px 20px; border-radius: 8px;">
+                    <span>← Return to Home</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchInput = document.getElementById("admin-search-input");
+            const tableBody = document.getElementById("logs-table-body");
+            const rows = Array.from(tableBody.querySelectorAll(".log-row"));
+            const exportBtn = document.getElementById("export-csv-btn");
+            const headers = document.querySelectorAll("th.sortable");
+
+            // Element Metric Badges
+            const statUnique = document.getElementById("stat-unique");
+            const statAvgComp = document.getElementById("stat-avg-compatibility");
+            const statTotal = document.getElementById("stat-total");
+
+            let currentSortColumn = null;
+            let currentSortOrder = "asc"; // "asc" or "desc"
+
+            // 1. Calculate Real-Time Dynamic Metrics
+            function updateMetrics() {
+                const visibleRows = rows.filter(row => row.style.display !== "none");
+                statTotal.textContent = visibleRows.length;
+
+                if (visibleRows.length === 0) {
+                    statUnique.textContent = "0";
+                    statAvgComp.textContent = "0%";
+                    return;
+                }
+
+                const uniqueCharacters = new Set();
+                let compatibilitySum = 0;
+
+                visibleRows.forEach(row => {
+                    const charName = row.querySelector(".character-badge").textContent.trim();
+                    uniqueCharacters.add(charName);
+
+                    const scoreCell = row.querySelector(".score-cell");
+                    const scoreVal = parseInt(scoreCell.getAttribute("data-val")) || 0;
+                    compatibilitySum += scoreVal;
+                });
+
+                statUnique.textContent = uniqueCharacters.size;
+                const avg = Math.round(compatibilitySum / visibleRows.length);
+                statAvgComp.textContent = avg + "%";
+            }
+
+            // Initial computation
+            updateMetrics();
+
+            // 2. Real-Time Search Filter
+            searchInput.addEventListener("input", () => {
+                const query = searchInput.value.toLowerCase().trim();
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                // Check if all rows are hidden, show empty indicator if so
+                const visibleRowsCount = rows.filter(row => row.style.display !== "none").length;
+                let emptyRow = tableBody.querySelector(".temp-empty-row");
+
+                if (visibleRowsCount === 0 && rows.length > 0) {
+                    if (!emptyRow) {
+                        emptyRow = document.createElement("tr");
+                        emptyRow.className = "temp-empty-row";
+                        emptyRow.innerHTML = `<td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No records match your filter query.</td>`;
+                        tableBody.appendChild(emptyRow);
+                    }
+                } else if (emptyRow) {
+                    emptyRow.remove();
+                }
+
+                updateMetrics();
+            });
+
+            // 3. Sorting Functionality
+            headers.forEach(header => {
+                header.addEventListener("click", () => {
+                    const sortKey = header.getAttribute("data-sort");
+                    
+                    if (currentSortColumn === sortKey) {
+                        currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+                    } else {
+                        currentSortColumn = sortKey;
+                        currentSortOrder = "asc";
+                    }
+
+                    // Reset sort indicators
+                    headers.forEach(h => {
+                        const indicator = h.querySelector(".sort-indicator");
+                        indicator.textContent = "↕";
+                    });
+
+                    // Set active indicator
+                    const activeIndicator = header.querySelector(".sort-indicator");
+                    activeIndicator.textContent = currentSortOrder === "asc" ? "▲" : "▼";
+
+                    sortRows(sortKey, currentSortOrder);
+                });
+            });
+
+            function sortRows(key, order) {
+                const multiplier = order === "asc" ? 1 : -1;
+
+                rows.sort((a, b) => {
+                    let valA, valB;
+
+                    if (key === "date") {
+                        valA = a.querySelector(".date-cell").getAttribute("data-val");
+                        valB = b.querySelector(".date-cell").getAttribute("data-val");
+                        return valA.localeCompare(valB) * multiplier;
+                    } 
+                    else if (key === "name") {
+                        valA = a.querySelector(".name-cell").textContent.trim().toLowerCase();
+                        valB = b.querySelector(".name-cell").textContent.trim().toLowerCase();
+                        return valA.localeCompare(valB) * multiplier;
+                    } 
+                    else if (key === "age") {
+                        valA = parseInt(a.querySelector(".age-cell").getAttribute("data-val")) || 0;
+                        valB = parseInt(b.querySelector(".age-cell").getAttribute("data-val")) || 0;
+                        return (valA - valB) * multiplier;
+                    } 
+                    else if (key === "character") {
+                        valA = a.querySelector(".character-badge").textContent.trim().toLowerCase();
+                        valB = b.querySelector(".character-badge").textContent.trim().toLowerCase();
+                        return valA.localeCompare(valB) * multiplier;
+                    } 
+                    else if (key === "score") {
+                        valA = parseInt(a.querySelector(".score-cell").getAttribute("data-val")) || 0;
+                        valB = parseInt(b.querySelector(".score-cell").getAttribute("data-val")) || 0;
+                        return (valA - valB) * multiplier;
+                    }
+
+                    return 0;
+                });
+
+                // Re-append sorted rows
+                rows.forEach(row => tableBody.appendChild(row));
+            }
+
+            // 4. CSV Export of Filtered / Visible Logs
+            exportBtn.addEventListener("click", () => {
+                const visibleRows = rows.filter(row => row.style.display !== "none");
+                if (visibleRows.length === 0) {
+                    alert("No logs available to export.");
+                    return;
+                }
+
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Timestamp,Name,Age,Gender,Matched Character,Compatibility Score\n";
+
+                visibleRows.forEach(row => {
+                    const timestamp = row.querySelector(".date-cell").textContent.trim();
+                    const name = row.querySelector(".name-cell").textContent.trim().replace(/,/g, " "); // escape commas
+                    const age = row.querySelector(".age-cell").textContent.trim();
+                    const gender = row.querySelector(".gender-badge").textContent.trim();
+                    const character = row.querySelector(".character-badge").textContent.trim();
+                    const score = row.querySelector(".score-cell").textContent.trim();
+
+                    csvContent += `"${timestamp}","${name}",${age},"${gender}","${character}","${score}"\n`;
+                });
+
+                // Trigger browser download link
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                const dateStr = new Date().toISOString().slice(0, 10);
+                link.setAttribute("download", `personality_analyzer_logs_${dateStr}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // Play hover chimes
+            const buttons = document.querySelectorAll(".btn, th.sortable");
+            buttons.forEach(btn => {
+                btn.addEventListener("mouseenter", () => {
+                    if (typeof parent !== 'undefined' && parent.soundEffects) {
+                        parent.soundEffects.hover();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -381,13 +381,22 @@ function submitQuiz() {
     const minLoadingTime = 1600; // Minimum time loading spinner shows (1.6s)
     const startTime = Date.now();
     
+    const name = localStorage.getItem("userName") || "User";
+    const age = localStorage.getItem("userAge") || "N/A";
+    const gender = localStorage.getItem("userGender") || "N/A";
+
     // Submit post request to backend API
     fetch("/predict", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ answers: userAnswers })
+        body: JSON.stringify({
+            answers: userAnswers,
+            name: name,
+            age: age,
+            gender: gender
+        })
     })
     .then(response => {
         if (!response.ok) {

@@ -11,7 +11,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body{% if session.get('logged_in') %} class="has-admin-banner"{% endif %}>
+    {% if session.get('logged_in') %}
+    <div class="admin-session-banner">
+        <div class="banner-content">
+            <span class="banner-badge">ADMIN MODE ACTIVE</span>
+            <span class="banner-text">Viewing quiz as administrator.</span>
+        </div>
+        <div class="banner-actions">
+            <a href="{{ url_for('admin_portal') }}" class="banner-link">Admin Portal</a>
+            <span class="banner-sep">|</span>
+            <a href="{{ url_for('admin_logout') }}" class="banner-link logout">Log Out</a>
+        </div>
+    </div>
+    {% endif %}
     <div class="grid-bg"></div>
     <!-- Immersive looping ambient background video -->
     <div class="video-bg-container">
@@ -261,7 +274,7 @@
     </main>
 
     <footer>
-        <p>Built with Python + Flask + Scikit-Learn (KNN Classifier)</p>
+        <p>Built with Python + Flask + Scikit-Learn (KNN Classifier) | <a href="{{ url_for('admin_login') }}" class="footer-link">Admin Access</a></p>
     </footer>
 
     <!-- Quiz Question Data & Control Logic -->

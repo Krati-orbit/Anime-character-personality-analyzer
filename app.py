@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import json
 import os
 import logging
+import csv
+from datetime import datetime
+from functools import wraps
 from model import get_user_vector, predict_character, get_rival_character, CHARACTER_PROTOTYPES
 
 # Configure logging
@@ -9,6 +12,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.secret_key = "anime_personality_secret_key_987654"
+ADMIN_PASSWORD = "admin123"
+CSV_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users_log.csv")
 
 # Load character database
 CHARACTERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "characters.json")
@@ -28,7 +34,7 @@ def index():
 def predict():
     """
     Handles the AJAX submission of quiz answer indices.
-    Expects JSON input: { "answers": [0, 2, 1, 3, ...] } (10 integer elements)
+    Expects JSON input: { "answers": [0, 2, 1, 3, ...], "name": "...", "age": "...", "gender": "..." }
     """
     try:
         data = request.get_json()
@@ -38,6 +44,11 @@ def predict():
         answers = data["answers"]
         if not isinstance(answers, list) or len(answers) != 10:
             return jsonify({"error": "Exactly 10 answers are required."}), 400
+        
+        # Extract optional user profile fields
+        name = data.get("name", "User")
+        age = data.get("age", "N/A")
+        gender = data.get("gender", "N/A")
         
         # Parse indices to integers
         answer_indices = [int(x) for x in answers]
@@ -51,6 +62,21 @@ def predict():
         
         logger.info(f"Quiz completed. Matched user with: {predicted_slug} ({match_percentage}%)")
         
+        # Log the user's test result to local CSV file
+        try:
+            file_exists = os.path.exists(CSV_FILE_PATH)
+            with open(CSV_FILE_PATH, mode="a", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f)
+                if not file_exists:
+                    writer.writerow(["timestamp", "name", "age", "gender", "matched_character", "compatibility_score"])
+                
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                # Remove commas from name to avoid CSV parsing anomalies
+                clean_name = str(name).replace(",", " ")
+                writer.writerow([timestamp, clean_name, age, gender, predicted_slug.capitalize(), f"{match_percentage}%"])
+        except Exception as csv_err:
+            logger.error(f"Error logging quiz result to CSV: {csv_err}")
+            
         return jsonify({
             "success": True,
             "character": predicted_slug,
@@ -164,6 +190,66 @@ def image_proxy():
         logger.error(f"Error proxying image {url}: {e}")
         return "Error loading image", 500
 
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    """Renders the lock screen and handles admin authentication."""
+    error = None
+    if request.method == "POST":
+        password = request.form.get("password")
+        if password == ADMIN_PASSWORD:
+            session["logged_in"] = True
+            logger.info("Admin logged in successfully.")
+            return redirect(url_for("admin_portal"))
+        else:
+            error = "Invalid password. Access Denied."
+            logger.warning("Failed admin login attempt.")
+            
+    return render_template("admin_login.html", error=error)
+
+@app.route("/admin/portal")
+@admin_required
+def admin_portal():
+    """Renders the admin control hub/options page."""
+    return render_template("admin_portal.html")
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    """Renders the admin panel with a list of all user test submissions."""
+    users_list = []
+    if os.path.exists(CSV_FILE_PATH):
+        try:
+            with open(CSV_FILE_PATH, mode="r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    users_list.append(row)
+        except Exception as e:
+            logger.error(f"Error reading CSV logs: {e}")
+            
+    # Reverse list to show the most recent submissions first
+    users_list.reverse()
+    
+    return render_template(
+        "admin_dashboard.html",
+        users=users_list,
+        total_count=len(users_list)
+    )
+
+@app.route("/admin/logout")
+def admin_logout():
+    """Clears the admin login session."""
+    session.pop("logged_in", None)
+    logger.info("Admin logged out.")
+    return redirect(url_for("index"))
 
 
 @app.errorhandler(404)
