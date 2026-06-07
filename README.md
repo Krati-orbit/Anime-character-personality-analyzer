@@ -1,3 +1,13 @@
+---
+title: Anime Character Personality Analyzer
+emoji: 🧪
+colorFrom: purple
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Anime Character Personality Analyzer 🧪✨
 
 A premium, modern web application that analyzes your personality through a 10-question quiz and matches you with an iconic anime character. Under the hood, it projects your choices into a 10-dimensional personality trait vector and classifies it using a **K-Nearest Neighbors (KNN) Machine Learning model (n_neighbors=3)**.
