@@ -257,5 +257,7 @@ def page_not_found(e):
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5080)
+    port = int(os.environ.get("PORT", 7860))
+    debug_mode = os.environ.get("FLASK_ENV") == "development"
+    app.run(debug=debug_mode, host="0.0.0.0", port=port)
 
