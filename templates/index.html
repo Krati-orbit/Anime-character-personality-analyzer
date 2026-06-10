@@ -10,6 +10,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Chart.js for 10D Wiki Radar Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Inject server character database to JavaScript global scope
+        const CHARACTERS_DB = {{ characters | tojson }};
+    </script>
 </head>
 <body{% if session.get('logged_in') %} class="has-admin-banner"{% endif %}>
     {% if session.get('logged_in') %}
@@ -98,113 +104,32 @@
                 
                 <h3 class="section-title">Eligible Counterparts</h3>
                 <div class="character-preview-grid">
-                    <!-- Naruto -->
-                    <div class="char-preview-card" style="--char-color: #ff6600">
+                    {% for slug, char in characters.items() %}
+                    <div class="char-preview-card" style="--char-color: {{ char.color }}" data-slug="{{ slug }}">
                         <div class="card-glow"></div>
                         <div class="card-main">
-                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b17-phjcWCkRuIhu.png" alt="Naruto" class="char-avatar" referrerpolicy="no-referrer">
+                            <!-- Dynamic Avatar Container with Image & Emoji Fallback -->
+                            <div class="char-avatar-container" style="position: relative; width: 48px; height: 48px; flex-shrink: 0;">
+                                <img src="{{ url_for('image_proxy', url=char.image) }}" alt="{{ char.name }}" class="char-avatar" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--char-color); transition: all var(--transition-normal);">
+                                <div class="char-avatar-fallback" style="display: none; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--char-color); background: rgba(255, 255, 255, 0.05); align-items: center; justify-content: center; font-size: 1.3rem;">
+                                    {{ char.emoji }}
+                                </div>
+                            </div>
                             <div class="char-info">
-                                <span class="char-name">Naruto Uzumaki</span>
-                                <span class="char-show">from Naruto</span>
+                                <span class="char-name">{{ char.name }}</span>
+                                <span class="char-show">from {{ char.anime }}</span>
                             </div>
                         </div>
                         <div class="card-hover-details">
-                            <p>Energetic ninja with an iron will who never gives up on his friends.</p>
+                            <p>{{ char.description }}</p>
                             <div class="card-mini-traits">
-                                <span>Energetic</span><span>Friendly</span><span>Optimistic</span>
+                                {% for trait in char.traits %}
+                                <span>{{ trait }}</span>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Itachi -->
-                    <div class="char-preview-card" style="--char-color: #aa44ff">
-                        <div class="card-glow"></div>
-                        <div class="card-main">
-                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b14-9Kb1E5oel1ke.png" alt="Itachi" class="char-avatar" referrerpolicy="no-referrer">
-                            <div class="char-info">
-                                <span class="char-name">Itachi Uchiha</span>
-                                <span class="char-show">from Naruto</span>
-                            </div>
-                        </div>
-                        <div class="card-hover-details">
-                            <p>Silent Uchiha genius who sacrificed his life and pride to protect peace.</p>
-                            <div class="card-mini-traits">
-                                <span>Calm</span><span>Intelligent</span><span>Strategic</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Goku -->
-                    <div class="char-preview-card" style="--char-color: #ffdd00">
-                        <div class="card-glow"></div>
-                        <div class="card-main">
-                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/246-wsRRr6z1kii8.png" alt="Goku" class="char-avatar" referrerpolicy="no-referrer">
-                            <div class="char-info">
-                                <span class="char-name">Goku</span>
-                                <span class="char-show">from Dragon Ball Z</span>
-                            </div>
-                        </div>
-                        <div class="card-hover-details">
-                            <p>Carefree Saiyan warrior motivated by pushing limits and fighting the strong.</p>
-                            <div class="card-mini-traits">
-                                <span>Strong</span><span>Pure-hearted</span><span>Simple</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Light Yagami -->
-                    <div class="char-preview-card" style="--char-color: #ff2222">
-                        <div class="card-glow"></div>
-                        <div class="card-main">
-                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b80-26EhwSsSqQ50.png" alt="Light" class="char-avatar" referrerpolicy="no-referrer">
-                            <div class="char-info">
-                                <span class="char-name">Light Yagami</span>
-                                <span class="char-show">from Death Note</span>
-                            </div>
-                        </div>
-                        <div class="card-hover-details">
-                            <p>Calculative genius with a prideful god-complex enforcing absolute justice.</p>
-                            <div class="card-mini-traits">
-                                <span>Genius</span><span>Manipulative</span><span>Proud</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Luffy -->
-                    <div class="char-preview-card" style="--char-color: #ff4444">
-                        <div class="card-glow"></div>
-                        <div class="card-main">
-                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b40-MNypXsxSRb1R.png" alt="Luffy" class="char-avatar" referrerpolicy="no-referrer">
-                            <div class="char-info">
-                                <span class="char-name">Monkey D. Luffy</span>
-                                <span class="char-show">from One Piece</span>
-                            </div>
-                        </div>
-                        <div class="card-hover-details">
-                            <p>Free-spirited pirate captain chasing the ultimate dream of freedom.</p>
-                            <div class="card-mini-traits">
-                                <span>Free-spirited</span><span>Loyal</span><span>Determined</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Levi -->
-                    <div class="char-preview-card" style="--char-color: #4488ff">
-                        <div class="card-glow"></div>
-                        <div class="card-main">
-                            <img src="https://s4.anilist.co/file/anilistcdn/character/large/b40733-9HSPh4CKOMqA.png" alt="Levi" class="char-avatar" referrerpolicy="no-referrer">
-                            <div class="char-info">
-                                <span class="char-name">Levi Ackerman</span>
-                                <span class="char-show">from Attack on Titan</span>
-                            </div>
-                        </div>
-                        <div class="card-hover-details">
-                            <p>Humanity's strongest soldier: stoic, clean-obsessed, and fiercely protective.</p>
-                            <div class="card-mini-traits">
-                                <span>Disciplined</span><span>Cold</span><span>Protective</span>
-                            </div>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
 
                 <!-- ML Lab Panel -->
@@ -272,6 +197,62 @@
             </div>
         </div>
     </main>
+
+    <!-- Character Wiki Detail Modal -->
+    <div id="wiki-modal" class="modal hidden">
+        <div class="modal-backdrop" id="wiki-modal-backdrop"></div>
+        <div class="modal-content-wrapper">
+            <div class="modal-card" id="wiki-modal-card">
+                <button class="modal-close-btn" id="wiki-modal-close-btn" title="Close Details">&times;</button>
+                <div class="wiki-modal-grid">
+                    <!-- Left: Media & Traits -->
+                    <div class="wiki-modal-media">
+                        <div class="wiki-image-wrapper">
+                            <img src="" alt="" class="wiki-image" id="wiki-char-image" referrerpolicy="no-referrer" onerror="this.style.display='none'; document.getElementById('wiki-char-fallback').style.display='flex';">
+                            <div class="wiki-image-fallback" id="wiki-char-fallback" style="display: none;">
+                                <span class="wiki-fallback-emoji" id="wiki-char-fallback-emoji">🦊</span>
+                            </div>
+                        </div>
+                        <div class="wiki-traits-box">
+                            <h4 class="modal-section-title">Key Traits</h4>
+                            <div class="wiki-traits-container" id="wiki-char-traits">
+                                <!-- Dynamically generated -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Info, Quote, Vector Chart -->
+                    <div class="wiki-modal-info">
+                        <div class="wiki-modal-header">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <span class="wiki-emoji-badge" id="wiki-char-emoji">🦊</span>
+                                <h2 class="wiki-char-name" id="wiki-char-name" style="margin-bottom: 0;">Character Name</h2>
+                            </div>
+                            <p class="wiki-char-anime" id="wiki-char-anime">from Anime</p>
+                        </div>
+                        
+                        <div class="wiki-desc-section">
+                            <p id="wiki-char-description"></p>
+                        </div>
+                        
+                        <div class="wiki-quote-section">
+                            <blockquote class="wiki-quote" id="wiki-char-quote-block">
+                                <span class="wiki-quote-mark">“</span>
+                                <p id="wiki-char-quote"></p>
+                            </blockquote>
+                        </div>
+                        
+                        <div class="wiki-chart-section">
+                            <h4 class="modal-section-title">Personality Profile (10D)</h4>
+                            <div class="wiki-chart-container" style="position: relative; height: 220px; width: 100%;">
+                                <canvas id="wiki-radar-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <p>Built with Python + Flask + Scikit-Learn (KNN Classifier) | <a href="{{ url_for('admin_login') }}" class="footer-link">Admin Access</a></p>

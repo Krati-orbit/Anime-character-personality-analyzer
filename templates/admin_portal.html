@@ -32,8 +32,11 @@
                 <p class="subtitle">Select your entry pathway. You can test the application from the user perspective or view compiled telemetry logs.</p>
             </header>
 
+            <!-- Grid Container for selection cards -->
             <div class="admin-portal-grid">
-                <!-- Option 1: Take Quiz -->
+                <!-- Option 1: Take Quiz
+                     Redirects to normal user home page (/) while keeping admin session cookie active
+                     (which will display the top Admin Session Banner on home/result screens). -->
                 <a href="{{ url_for('index') }}" class="portal-card" style="--card-glow-color: #aa44ff;">
                     <div class="card-glow"></div>
                     <div class="portal-icon">📝</div>
@@ -42,7 +45,8 @@
                     <span class="portal-action-lbl">Proceed to Quiz →</span>
                 </a>
 
-                <!-- Option 2: Dashboard -->
+                <!-- Option 2: Dashboard
+                     Redirects to the admin intelligence dashboard panel (/admin) to view participant logs. -->
                 <a href="{{ url_for('admin_dashboard') }}" class="portal-card" style="--card-glow-color: #00ff88;">
                     <div class="card-glow"></div>
                     <div class="portal-icon">📊</div>
@@ -52,6 +56,7 @@
                 </a>
             </div>
 
+            <!-- Log out session button (wipes admin cookies and returns to user index) -->
             <div style="text-align: center; margin-top: 40px;">
                 <a href="{{ url_for('admin_logout') }}" class="btn btn-secondary" style="padding: 12px 28px; border-radius: 8px; font-size: 0.9rem;">
                     <span>Log Out Session</span>

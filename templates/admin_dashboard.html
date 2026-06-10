@@ -33,92 +33,304 @@
                 <p class="subtitle">Real-time telemetry and character alignment profile logs of all test participants.</p>
             </header>
 
-            <!-- Metrics Panel -->
-            <div class="admin-stats-container">
-                <div class="admin-stat-box">
-                    <span class="stat-num" id="stat-total">{{ total_count }}</span>
-                    <span class="stat-lbl">Total Submissions</span>
+            <!-- Admin Navigation Tabs -->
+            <div class="admin-tabs" style="display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <button class="admin-tab-btn active" data-tab="tab-logs" style="padding: 10px 20px; font-family: var(--font-heading); font-size: 0.9rem; font-weight: 600; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">📊 Telemetry Logs</button>
+                <button class="admin-tab-btn" data-tab="tab-registry" style="padding: 10px 20px; font-family: var(--font-heading); font-size: 0.9rem; font-weight: 600; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">🦊 Character Registry</button>
+                <button class="admin-tab-btn" data-tab="tab-ml" style="padding: 10px 20px; font-family: var(--font-heading); font-size: 0.9rem; font-weight: 600; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">⚙️ ML Model Hub</button>
+            </div>
+
+            <!-- Tab Panel 1: Telemetry Logs -->
+            <div id="tab-logs" class="admin-tab-panel">
+                <!-- Metrics Panel -->
+                <div class="admin-stats-container">
+                    <div class="admin-stat-box">
+                        <span class="stat-num" id="stat-total">{{ total_count }}</span>
+                        <span class="stat-lbl">Total Submissions</span>
+                    </div>
+                    <div class="admin-stat-box">
+                        <span class="stat-num" id="stat-unique">-</span>
+                        <span class="stat-lbl">Unique Matches</span>
+                    </div>
+                    <div class="admin-stat-box">
+                        <span class="stat-num" id="stat-avg-compatibility">-</span>
+                        <span class="stat-lbl">Avg Compatibility</span>
+                    </div>
                 </div>
-                <div class="admin-stat-box">
-                    <span class="stat-num" id="stat-unique">-</span>
-                    <span class="stat-lbl">Unique Matches</span>
+
+                <!-- Toolbar containing Search Filter and Actions -->
+                <div class="admin-toolbar">
+                    <div class="search-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="admin-search-input" placeholder="Filter by name, age, gender, or character..." autocomplete="off">
+                    </div>
+                    <div class="toolbar-actions">
+                        <button id="export-csv-btn" class="btn btn-secondary" style="padding: 12px 20px; font-size: 0.9rem; border-radius: 8px;">
+                            <span>📥 Export Logs</span>
+                        </button>
+                        <a href="{{ url_for('admin_logout') }}" class="btn btn-primary" style="padding: 12px 20px; font-size: 0.9rem; border-radius: 8px; background: #ff2222; color: #ffffff; box-shadow: 0 4px 15px rgba(255, 34, 34, 0.25);">
+                            <span>Log Out</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="admin-stat-box">
-                    <span class="stat-num" id="stat-avg-compatibility">-</span>
-                    <span class="stat-lbl">Avg Compatibility</span>
+
+                <!-- Scrollable Table Container -->
+                <div class="admin-table-container">
+                    <table class="admin-table" id="logs-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="date">Date & Time <span class="sort-indicator">↕</span></th>
+                                <th class="sortable" data-sort="name">Participant Name <span class="sort-indicator">↕</span></th>
+                                <th class="sortable" data-sort="age" style="text-align: center;">Age <span class="sort-indicator">↕</span></th>
+                                <th>Gender</th>
+                                <th class="sortable" data-sort="character">Matched Character <span class="sort-indicator">↕</span></th>
+                                <th class="sortable" data-sort="score" style="text-align: center;">Similarity <span class="sort-indicator">↕</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            {% if users %}
+                                {% for user in users %}
+                                <tr class="log-row">
+                                    <td class="font-mono text-muted date-cell" data-val="{{ user.timestamp }}">{{ user.timestamp }}</td>
+                                    <td class="font-bold text-primary name-cell">{{ user.name }}</td>
+                                    <td class="font-mono age-cell" style="text-align: center;" data-val="{{ user.age }}">{{ user.age }}</td>
+                                    <td>
+                                        <span class="gender-badge gender-{{ user.gender | lower }}">{{ user.gender }}</span>
+                                    </td>
+                                    <td>
+                                        {% set char_lower = user.matched_character | lower %}
+                                        {% if char_lower == 'naruto' %}
+                                            {% set badge_color = '#ff6600' %}
+                                        {% elif char_lower == 'itachi' %}
+                                            {% set badge_color = '#aa44ff' %}
+                                        {% elif char_lower == 'goku' %}
+                                            {% set badge_color = '#ffdd00' %}
+                                        {% elif char_lower == 'light' %}
+                                            {% set badge_color = '#ff2222' %}
+                                        {% elif char_lower == 'luffy' %}
+                                            {% set badge_color = '#ff4444' %}
+                                        {% elif char_lower == 'levi' %}
+                                            {% set badge_color = '#4488ff' %}
+                                        {% elif char_lower == 'l' %}
+                                            {% set badge_color = '#0088cc' %}
+                                        {% elif char_lower == 'eren' %}
+                                            {% set badge_color = '#7a1a1a' %}
+                                        {% elif char_lower == 'tanjiro' %}
+                                            {% set badge_color = '#00aa88' %}
+                                        {% else %}
+                                            {% set badge_color = '#ffffff' %}
+                                        {% endif %}
+                                        <span class="character-badge" style="--badge-color: {{ badge_color }};">{{ user.matched_character }}</span>
+                                    </td>
+                                    <td class="font-mono text-glow score-cell" style="text-align: center;" data-val="{{ user.compatibility_score | replace('%', '') | int }}">{{ user.compatibility_score }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr class="empty-row">
+                                    <td colspan="6" style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                                        ⚠️ No participants logged in the system yet.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Toolbar containing Search Filter and Actions -->
-            <div class="admin-toolbar">
-                <div class="search-wrapper">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="admin-search-input" placeholder="Filter by name, age, gender, or character..." autocomplete="off">
-                </div>
-                <div class="toolbar-actions">
-                    <button id="export-csv-btn" class="btn btn-secondary" style="padding: 12px 20px; font-size: 0.9rem; border-radius: 8px;">
-                        <span>📥 Export Logs</span>
+            <!-- Tab Panel 2: Character Registry -->
+            <div id="tab-registry" class="admin-tab-panel hidden">
+                <div class="registry-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; margin-top: 10px;">
+                    <h2 style="font-size: 1.6rem; font-family: var(--font-heading); background: linear-gradient(135deg, #ffffff 40%, #00ff88 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; margin: 0;">Registered Counterparts</h2>
+                    <button id="add-char-btn" class="btn btn-primary btn-glow" style="padding: 10px 20px; font-size: 0.85rem; border-radius: 8px; background: #00ff88; color: #050505;">
+                        <span>+ Add New Character</span>
                     </button>
-                    <a href="{{ url_for('admin_logout') }}" class="btn btn-primary" style="padding: 12px 20px; font-size: 0.9rem; border-radius: 8px; background: #ff2222; color: #ffffff; box-shadow: 0 4px 15px rgba(255, 34, 34, 0.25);">
-                        <span>Log Out</span>
-                    </a>
+                </div>
+
+                <div class="admin-char-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    {% for slug, char in characters.items() %}
+                    <div class="admin-char-card" data-slug="{{ slug }}" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; transition: border-color 0.2s ease;">
+                        <div style="display: flex; align-items: start; gap: 14px;">
+                            <div class="char-avatar-container" style="position: relative; width: 56px; height: 56px; flex-shrink: 0;">
+                                <img src="{{ url_for('image_proxy', url=char.image) }}" alt="{{ char.name }}" class="char-avatar" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid {{ char.color }};">
+                                <div class="char-avatar-fallback" style="display: none; width: 100%; height: 100%; border-radius: 50%; border: 2px solid {{ char.color }}; background: rgba(255, 255, 255, 0.05); align-items: center; justify-content: center; font-size: 1.5rem;">
+                                    {{ char.emoji }}
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <h4 style="font-family: var(--font-heading); font-size: 1.15rem; color: #fff; margin: 0; font-weight: 700;">{{ char.name }} <span style="font-size: 0.95rem; filter: drop-shadow(0 0 4px {{ char.color }});">{{ char.emoji }}</span></h4>
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">from <strong>{{ char.anime }}</strong></span>
+                                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                                    {% for trait in char.traits %}
+                                    <span style="font-size: 0.65rem; padding: 2px 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-secondary);">{{ trait }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 10px;">
+                            {{ char.description[:110] }}{% if char.description|length > 110 %}...{% endif %}
+                        </div>
+                        
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 10px;">
+                            <button class="btn btn-secondary edit-char-btn" data-slug="{{ slug }}" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px;">Edit Profile</button>
+                            <button class="btn btn-secondary delete-char-btn" data-slug="{{ slug }}" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px; border-color: rgba(255, 34, 34, 0.3); color: #ff4444;">Delete</button>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- Scrollable Table Container -->
-            <div class="admin-table-container">
-                <table class="admin-table" id="logs-table">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort="date">Date & Time <span class="sort-indicator">↕</span></th>
-                            <th class="sortable" data-sort="name">Participant Name <span class="sort-indicator">↕</span></th>
-                            <th class="sortable" data-sort="age" style="text-align: center;">Age <span class="sort-indicator">↕</span></th>
-                            <th>Gender</th>
-                            <th class="sortable" data-sort="character">Matched Character <span class="sort-indicator">↕</span></th>
-                            <th class="sortable" data-sort="score" style="text-align: center;">Similarity <span class="sort-indicator">↕</span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="logs-table-body">
-                        {% if users %}
-                            {% for user in users %}
-                            <tr class="log-row">
-                                <td class="font-mono text-muted date-cell" data-val="{{ user.timestamp }}">{{ user.timestamp }}</td>
-                                <td class="font-bold text-primary name-cell">{{ user.name }}</td>
-                                <td class="font-mono age-cell" style="text-align: center;" data-val="{{ user.age }}">{{ user.age }}</td>
-                                <td>
-                                    <span class="gender-badge gender-{{ user.gender | lower }}">{{ user.gender }}</span>
-                                </td>
-                                <td>
-                                    {% set char_lower = user.matched_character | lower %}
-                                    {% if char_lower == 'naruto' %}
-                                        {% set badge_color = '#ff6600' %}
-                                    {% elif char_lower == 'itachi' %}
-                                        {% set badge_color = '#aa44ff' %}
-                                    {% elif char_lower == 'goku' %}
-                                        {% set badge_color = '#ffdd00' %}
-                                    {% elif char_lower == 'light' %}
-                                        {% set badge_color = '#ff2222' %}
-                                    {% elif char_lower == 'luffy' %}
-                                        {% set badge_color = '#ff4444' %}
-                                    {% elif char_lower == 'levi' %}
-                                        {% set badge_color = '#4488ff' %}
-                                    {% else %}
-                                        {% set badge_color = '#ffffff' %}
-                                    {% endif %}
-                                    <span class="character-badge" style="--badge-color: {{ badge_color }};">{{ user.matched_character }}</span>
-                                </td>
-                                <td class="font-mono text-glow score-cell" style="text-align: center;" data-val="{{ user.compatibility_score | replace('%', '') | int }}">{{ user.compatibility_score }}</td>
+            <!-- Tab Panel 3: ML Model Hub -->
+            <div id="tab-ml" class="admin-tab-panel hidden">
+                <div style="margin-top: 10px; margin-bottom: 24px;">
+                    <h2 style="font-size: 1.6rem; font-family: var(--font-heading); background: linear-gradient(135deg, #ffffff 40%, #00bcff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; margin: 0;">Classifier Calibration</h2>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">Inspect model settings and retrain the K-Nearest Neighbors Classifier boundary rules.</p>
+                </div>
+
+                <div class="ml-hub-split" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                    <div style="background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px;">
+                        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; color: #fff; margin-top: 0; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Model Specifications</h3>
+                        
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                                <td style="padding: 10px 0; color: var(--text-secondary);">Algorithm</td>
+                                <td style="padding: 10px 0; font-family: monospace; text-align: right; color: #fff;">K-Nearest Neighbors (KNN)</td>
                             </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr class="empty-row">
-                                <td colspan="6" style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
-                                    ⚠️ No participants logged in the system yet.
-                                </td>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                                <td style="padding: 10px 0; color: var(--text-secondary);">K-Neighbors Parameter</td>
+                                <td style="padding: 10px 0; font-family: monospace; text-align: right; color: #fff;">n_neighbors = 3</td>
                             </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                                <td style="padding: 10px 0; color: var(--text-secondary);">Distance Metric</td>
+                                <td style="padding: 10px 0; font-family: monospace; text-align: right; color: #fff;">Cosine Similarity</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                                <td style="padding: 10px 0; color: var(--text-secondary);">Dimensions (Features)</td>
+                                <td style="padding: 10px 0; font-family: monospace; text-align: right; color: #fff;">10 Traits</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                                <td style="padding: 10px 0; color: var(--text-secondary);">Target Classes</td>
+                                <td style="padding: 10px 0; font-family: monospace; text-align: right; color: #fff;">{{ characters|length }} Characters</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 0; color: var(--text-secondary);">Synthetic Corpus Volume</td>
+                                <td style="padding: 10px 0; font-family: monospace; text-align: right; color: #fff;">{{ characters|length * 200 }} Samples</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; justify-content: space-between; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; min-height: 250px;">
+                        <div>
+                            <h3 style="font-family: var(--font-heading); font-size: 1.1rem; color: #fff; margin-top: 0; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Calibrate Model</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">
+                                Modifications to character profiles and trait scores require retraining the KNN classifier decision space. Retraining will synthesize 200 normal-distributed variations of each prototype to build a robust classifier.
+                            </p>
+                        </div>
+                        <button id="btn-retrain" class="btn btn-primary btn-glow" style="width: 100%; background: #00bcff; color: #050505; border-radius: 10px; font-weight: 700; height: 50px;">
+                            <span>Rebuild & Retrain ML Classifier</span>
+                        </button>
+                    </div>
+                </div>
+
+                <h3 style="font-family: var(--font-heading); font-size: 1.1rem; color: #fff; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Calibration Console</h3>
+                <div id="train-console" style="background: #020202; border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; height: 160px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; line-height: 1.6; color: #00ff88; text-align: left;">
+                    <div style="color: #626262;">&gt; Classifier console online. Ready for rebuild calibration...</div>
+                </div>
+            </div>
+
+            <!-- Slide-over Drawer for Add/Edit Character -->
+            <div id="char-drawer" class="drawer hidden">
+                <div class="drawer-backdrop" id="char-drawer-backdrop"></div>
+                <div class="drawer-content" id="char-drawer-content" style="background: #0d0d0d; border-left: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+                        <h3 id="drawer-title" style="font-family: var(--font-heading); font-size: 1.4rem; color: #fff; margin: 0; font-weight: 700;">Add Character</h3>
+                        <button id="drawer-close-btn" style="background: none; border: none; font-size: 1.8rem; color: var(--text-secondary); cursor: pointer; line-height: 1;">&times;</button>
+                    </div>
+                    
+                    <form id="char-form" style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto; max-height: calc(100% - 75px); padding-right: 5px; text-align: left;">
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="char-slug-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Unique ID (Slug)</label>
+                            <input type="text" id="char-slug-input" placeholder="e.g. lelouch" required maxlength="20" autocomplete="off" style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.9rem;">
+                            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: -2px;">Alphanumeric lowercase, serves as the database index key (cannot be modified later).</span>
+                        </div>
+                        
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="char-name-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Full Name</label>
+                                <input type="text" id="char-name-input" placeholder="e.g. Lelouch Vi Britannia" required maxlength="40" style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.9rem;">
+                            </div>
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="char-anime-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Anime Show</label>
+                                <input type="text" id="char-anime-input" placeholder="e.g. Code Geass" required maxlength="40" style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.9rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 130px; gap: 16px;">
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="char-emoji-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Emoji Icon</label>
+                                <input type="text" id="char-emoji-input" placeholder="e.g. 👁️" required maxlength="5" style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.9rem;">
+                            </div>
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="char-color-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Theme Color</label>
+                                <div style="display: flex; align-items: center; gap: 8px; height: 38px;">
+                                    <input type="color" id="char-color-picker" value="#00bcff" style="border: none; background: none; width: 32px; height: 32px; cursor: pointer; padding: 0; flex-shrink: 0;">
+                                    <input type="text" id="char-color-input" placeholder="#00bcff" required maxlength="7" style="width: 100%; height: 100%; padding: 10px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-family: monospace; outline: none; font-size: 0.8rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="char-image-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Character Portrait URL</label>
+                            <input type="url" id="char-image-input" placeholder="e.g. https://s4.anilist.co/file/anilistcdn/character/large/..." required style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.9rem;">
+                        </div>
+
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="char-traits-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Signature Traits (Comma-separated)</label>
+                            <input type="text" id="char-traits-input" placeholder="e.g. Genius, Ambitious, Proud" required style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.9rem;">
+                        </div>
+
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="char-quote-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Iconic Quote</label>
+                            <textarea id="char-quote-input" placeholder="Quote from the character..." required rows="2" style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; resize: vertical; font-family: var(--font-body); font-size: 0.9rem;"></textarea>
+                        </div>
+
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="char-desc-input" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Character Biography</label>
+                            <textarea id="char-desc-input" placeholder="Brief character overview..." required rows="3" style="width: 100%; padding: 10px 14px; background: #161616; border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; resize: vertical; font-family: var(--font-body); font-size: 0.9rem;"></textarea>
+                        </div>
+
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+                            <label style="font-family: var(--font-heading); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 12px; display: block; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 5px; font-weight: 700;">
+                                10D Personality Vectors (0% to 100%)
+                            </label>
+                            
+                            <div class="sliders-list" style="display: flex; flex-direction: column; gap: 14px;">
+                                {% set traits_labels = [
+                                    "Extraversion", "Intellect", "Discipline", "Empathy", "Determination",
+                                    "Aggression", "Optimism", "Mysteriousness", "Pride", "Sacrifice"
+                                ] %}
+                                {% for i in range(10) %}
+                                <div class="slider-group" style="display: flex; flex-direction: column; gap: 4px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary);">
+                                        <span>{{ traits_labels[i] }}</span>
+                                        <span class="slider-val-lbl" id="slider-lbl-{{ i }}">50%</span>
+                                    </div>
+                                    <input type="range" class="trait-range-slider" data-index="{{ i }}" min="0" max="100" value="50" style="width: 100%; height: 4px; background: #222; border-radius: 100px; cursor: pointer; outline: none;">
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; padding-bottom: 30px;">
+                            <button type="submit" class="btn btn-primary" style="padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; background: #00ff88; color: #050505; font-weight: 700;">
+                                <span>Save Character</span>
+                            </button>
+                            <button type="button" id="drawer-cancel-btn" class="btn btn-secondary" style="padding: 12px 24px; border-radius: 8px; font-size: 0.9rem;">
+                                <span>Cancel</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- Footer-Return Button -->
@@ -131,6 +343,9 @@
     </main>
 
     <script>
+        // Inject character registry database into JavaScript
+        const ADMIN_CHARACTERS_DB = {{ characters | tojson }};
+
         document.addEventListener("DOMContentLoaded", () => {
             const searchInput = document.getElementById("admin-search-input");
             const tableBody = document.getElementById("logs-table-body");
@@ -148,6 +363,7 @@
 
             // 1. Calculate Real-Time Dynamic Metrics
             function updateMetrics() {
+                if (!statTotal) return; // safeguard if not on logs tab view
                 const visibleRows = rows.filter(row => row.style.display !== "none");
                 statTotal.textContent = visibleRows.length;
 
@@ -178,35 +394,37 @@
             updateMetrics();
 
             // 2. Real-Time Search Filter
-            searchInput.addEventListener("input", () => {
-                const query = searchInput.value.toLowerCase().trim();
+            if (searchInput) {
+                searchInput.addEventListener("input", () => {
+                    const query = searchInput.value.toLowerCase().trim();
 
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    if (text.includes(query)) {
-                        row.style.display = "";
-                    } else {
-                        row.style.display = "none";
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        if (text.includes(query)) {
+                            row.style.display = "";
+                        } else {
+                            row.style.display = "none";
+                        }
+                    });
+
+                    // Check if all rows are hidden, show empty indicator if so
+                    const visibleRowsCount = rows.filter(row => row.style.display !== "none").length;
+                    let emptyRow = tableBody.querySelector(".temp-empty-row");
+
+                    if (visibleRowsCount === 0 && rows.length > 0) {
+                        if (!emptyRow) {
+                            emptyRow = document.createElement("tr");
+                            emptyRow.className = "temp-empty-row";
+                            emptyRow.innerHTML = `<td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No records match your filter query.</td>`;
+                            tableBody.appendChild(emptyRow);
+                        }
+                    } else if (emptyRow) {
+                        emptyRow.remove();
                     }
+
+                    updateMetrics();
                 });
-
-                // Check if all rows are hidden, show empty indicator if so
-                const visibleRowsCount = rows.filter(row => row.style.display !== "none").length;
-                let emptyRow = tableBody.querySelector(".temp-empty-row");
-
-                if (visibleRowsCount === 0 && rows.length > 0) {
-                    if (!emptyRow) {
-                        emptyRow = document.createElement("tr");
-                        emptyRow.className = "temp-empty-row";
-                        emptyRow.innerHTML = `<td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No records match your filter query.</td>`;
-                        tableBody.appendChild(emptyRow);
-                    }
-                } else if (emptyRow) {
-                    emptyRow.remove();
-                }
-
-                updateMetrics();
-            });
+            }
 
             // 3. Sorting Functionality
             headers.forEach(header => {
@@ -274,40 +492,338 @@
             }
 
             // 4. CSV Export of Filtered / Visible Logs
-            exportBtn.addEventListener("click", () => {
-                const visibleRows = rows.filter(row => row.style.display !== "none");
-                if (visibleRows.length === 0) {
-                    alert("No logs available to export.");
-                    return;
-                }
+            if (exportBtn) {
+                exportBtn.addEventListener("click", () => {
+                    const visibleRows = rows.filter(row => row.style.display !== "none");
+                    if (visibleRows.length === 0) {
+                        alert("No logs available to export.");
+                        return;
+                    }
 
-                let csvContent = "data:text/csv;charset=utf-8,";
-                csvContent += "Timestamp,Name,Age,Gender,Matched Character,Compatibility Score\n";
+                    let csvContent = "data:text/csv;charset=utf-8,";
+                    csvContent += "Timestamp,Name,Age,Gender,Matched Character,Compatibility Score\n";
 
-                visibleRows.forEach(row => {
-                    const timestamp = row.querySelector(".date-cell").textContent.trim();
-                    const name = row.querySelector(".name-cell").textContent.trim().replace(/,/g, " "); // escape commas
-                    const age = row.querySelector(".age-cell").textContent.trim();
-                    const gender = row.querySelector(".gender-badge").textContent.trim();
-                    const character = row.querySelector(".character-badge").textContent.trim();
-                    const score = row.querySelector(".score-cell").textContent.trim();
+                    visibleRows.forEach(row => {
+                        const timestamp = row.querySelector(".date-cell").textContent.trim();
+                        const name = row.querySelector(".name-cell").textContent.trim().replace(/,/g, " "); // escape commas
+                        const age = row.querySelector(".age-cell").textContent.trim();
+                        const gender = row.querySelector(".gender-badge").textContent.trim();
+                        const character = row.querySelector(".character-badge").textContent.trim();
+                        const score = row.querySelector(".score-cell").textContent.trim();
 
-                    csvContent += `"${timestamp}","${name}",${age},"${gender}","${character}","${score}"\n`;
+                        csvContent += `"${timestamp}","${name}",${age},"${gender}","${character}","${score}"\n`;
+                    });
+
+                    // Trigger browser download link
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    link.setAttribute("download", `personality_analyzer_logs_${dateStr}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 });
+            }
 
-                // Trigger browser download link
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                const dateStr = new Date().toISOString().slice(0, 10);
-                link.setAttribute("download", `personality_analyzer_logs_${dateStr}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            // --- TAB NAV LOGIC ---
+            const tabButtons = document.querySelectorAll(".admin-tab-btn");
+            const tabPanels = document.querySelectorAll(".admin-tab-panel");
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    if (typeof parent !== 'undefined' && parent.soundEffects) {
+                        parent.soundEffects.select();
+                    }
+                    
+                    const targetTab = btn.getAttribute("data-tab");
+                    
+                    tabButtons.forEach(b => b.classList.remove("active"));
+                    tabPanels.forEach(p => p.classList.add("hidden"));
+                    
+                    btn.classList.add("active");
+                    document.getElementById(targetTab).classList.remove("hidden");
+                });
             });
 
+            // --- CHARACTER CRUD DRAWER LOGIC ---
+            const charDrawer = document.getElementById("char-drawer");
+            const charForm = document.getElementById("char-form");
+            const drawerTitle = document.getElementById("drawer-title");
+
+            const slugInput = document.getElementById("char-slug-input");
+            const nameInput = document.getElementById("char-name-input");
+            const animeInput = document.getElementById("char-anime-input");
+            const emojiInput = document.getElementById("char-emoji-input");
+            const colorInput = document.getElementById("char-color-input");
+            const colorPicker = document.getElementById("char-color-picker");
+            const imageInput = document.getElementById("char-image-input");
+            const traitsInput = document.getElementById("char-traits-input");
+            const quoteInput = document.getElementById("char-quote-input");
+            const descInput = document.getElementById("char-desc-input");
+
+            const rangeSliders = document.querySelectorAll(".trait-range-slider");
+
+            // Keep slider values updated
+            rangeSliders.forEach(slider => {
+                slider.addEventListener("input", () => {
+                    const idx = slider.getAttribute("data-index");
+                    const val = slider.value;
+                    document.getElementById(`slider-lbl-${idx}`).textContent = `${val}%`;
+                });
+            });
+
+            // Color picker synchronization
+            if (colorPicker && colorInput) {
+                colorPicker.addEventListener("input", () => {
+                    colorInput.value = colorPicker.value;
+                });
+                colorInput.addEventListener("input", () => {
+                    if (colorInput.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                        colorPicker.value = colorInput.value;
+                    }
+                });
+            }
+
+            let isEditMode = false;
+
+            function openDrawer(editSlug = null) {
+                if (typeof parent !== 'undefined' && parent.soundEffects) {
+                    parent.soundEffects.select();
+                }
+                charForm.reset();
+                rangeSliders.forEach(slider => {
+                    slider.value = 50;
+                    const idx = slider.getAttribute("data-index");
+                    document.getElementById(`slider-lbl-${idx}`).textContent = "50%";
+                });
+
+                if (editSlug) {
+                    isEditMode = true;
+                    drawerTitle.textContent = "Edit Character Profile";
+                    slugInput.value = editSlug;
+                    slugInput.readOnly = true;
+
+                    const char = ADMIN_CHARACTERS_DB[editSlug];
+                    if (char) {
+                        nameInput.value = char.name;
+                        animeInput.value = char.anime;
+                        emojiInput.value = char.emoji;
+                        colorInput.value = char.color;
+                        colorPicker.value = char.color;
+                        imageInput.value = char.image || "";
+                        traitsInput.value = (char.traits || []).join(", ");
+                        quoteInput.value = char.quote;
+                        descInput.value = char.description;
+
+                        if (char.vector && char.vector.length === 10) {
+                            char.vector.forEach((val, idx) => {
+                                const pct = Math.round(val * 100);
+                                const slider = document.querySelector(`.trait-range-slider[data-index="${idx}"]`);
+                                if (slider) {
+                                    slider.value = pct;
+                                    document.getElementById(`slider-lbl-${idx}`).textContent = `${pct}%`;
+                                }
+                            });
+                        }
+                    }
+                } else {
+                    isEditMode = false;
+                    drawerTitle.textContent = "Add New Counterpart";
+                    slugInput.value = "";
+                    slugInput.readOnly = false;
+                    colorInput.value = "#00bcff";
+                    colorPicker.value = "#00bcff";
+                }
+
+                charDrawer.classList.remove("hidden");
+                charDrawer.offsetHeight; // force reflow
+                charDrawer.classList.add("active");
+            }
+
+            function closeDrawer() {
+                if (typeof parent !== 'undefined' && parent.soundEffects) {
+                    parent.soundEffects.hover();
+                }
+                charDrawer.classList.remove("active");
+                setTimeout(() => {
+                    charDrawer.classList.add("hidden");
+                }, 300);
+            }
+
+            // Bind triggers
+            const addCharBtn = document.getElementById("add-char-btn");
+            const drawerCloseBtn = document.getElementById("drawer-close-btn");
+            const drawerCancelBtn = document.getElementById("drawer-cancel-btn");
+            const drawerBackdrop = document.getElementById("char-drawer-backdrop");
+
+            if (addCharBtn) addCharBtn.addEventListener("click", () => openDrawer());
+            if (drawerCloseBtn) drawerCloseBtn.addEventListener("click", closeDrawer);
+            if (drawerCancelBtn) drawerCancelBtn.addEventListener("click", closeDrawer);
+            if (drawerBackdrop) drawerBackdrop.addEventListener("click", closeDrawer);
+
+            document.querySelectorAll(".edit-char-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const slug = btn.getAttribute("data-slug");
+                    openDrawer(slug);
+                });
+            });
+
+            // Delete Action
+            document.querySelectorAll(".delete-char-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    if (typeof parent !== 'undefined' && parent.soundEffects) {
+                        parent.soundEffects.select();
+                    }
+                    const slug = btn.getAttribute("data-slug");
+                    const name = ADMIN_CHARACTERS_DB[slug] ? ADMIN_CHARACTERS_DB[slug].name : slug;
+
+                    if (confirm(`Are you sure you want to delete '${name}'?\nThis will remove their profile from the database.`)) {
+                        fetch(`/admin/characters/delete/${slug}`, {
+                            method: "POST"
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                window.location.reload();
+                            } else {
+                                alert("Error: " + data.error);
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Delete request failed:", err);
+                            alert("Failed to delete character.");
+                        });
+                    }
+                });
+            });
+
+            // Form Submit Action
+            charForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                const slug = slugInput.value.trim().toLowerCase();
+                const name = nameInput.value.trim();
+                const anime = animeInput.value.trim();
+                const emoji = emojiInput.value.trim();
+                const color = colorInput.value.trim();
+                const image = imageInput.value.trim();
+                const quote = quoteInput.value.trim();
+                const description = descInput.value.trim();
+                
+                // Parse traits list
+                const traits = traitsInput.value.split(",").map(t => t.trim()).filter(t => t.length > 0);
+
+                // Parse 10D sliders values mapped from [0-100] to [0.0 - 1.0]
+                const vector = [];
+                for (let i = 0; i < 10; i++) {
+                    const slider = document.querySelector(`.trait-range-slider[data-index="${i}"]`);
+                    vector.push(parseFloat((slider.value / 100).toFixed(2)));
+                }
+
+                const payload = {
+                    slug: slug,
+                    name: name,
+                    anime: anime,
+                    emoji: emoji,
+                    color: color,
+                    image: image,
+                    traits: traits,
+                    quote: quote,
+                    description: description,
+                    vector: vector
+                };
+
+                fetch("/admin/characters/save", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        closeDrawer();
+                        window.location.reload();
+                    } else {
+                        alert("Error: " + data.error);
+                    }
+                })
+                .catch(err => {
+                    console.error("Save character failed:", err);
+                    alert("Failed to save character profile.");
+                });
+            });
+
+            // --- ML AUTO-RETRAIN LOGIC ---
+            const retrainBtn = document.getElementById("btn-retrain");
+            const consoleBox = document.getElementById("train-console");
+
+            function appendConsoleLine(text, type = "info") {
+                const line = document.createElement("div");
+                if (type === "error") {
+                    line.style.color = "#ff4444";
+                } else if (type === "success") {
+                    line.style.color = "#00ff88";
+                    line.style.fontWeight = "bold";
+                } else if (type === "muted") {
+                    line.style.color = "#626262";
+                } else {
+                    line.style.color = "#00ff88";
+                }
+                line.textContent = `> ${text}`;
+                consoleBox.appendChild(line);
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+            }
+
+            if (retrainBtn) {
+                retrainBtn.addEventListener("click", () => {
+                    if (typeof parent !== 'undefined' && parent.soundEffects) {
+                        parent.soundEffects.select();
+                    }
+                    retrainBtn.disabled = true;
+                    const originalHtml = retrainBtn.innerHTML;
+                    retrainBtn.innerHTML = "<span>Rebuilding Classifier...</span>";
+
+                    appendConsoleLine("------------------------------------------------", "muted");
+                    appendConsoleLine("ML calibration trigger initiated by administrator.");
+                    appendConsoleLine("Connecting to model calibration runner...");
+
+                    setTimeout(() => {
+                        appendConsoleLine("Executing Python runner (train_model)...");
+                        appendConsoleLine("Synthesizing 200 normal-distributed variations per archetype...");
+
+                        fetch("/admin/retrain", {
+                            method: "POST"
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                appendConsoleLine("Model training successfully completed.", "success");
+                                appendConsoleLine("Classifier boundaries calibrated (k=3 Neighbors, Cosine Distance).", "success");
+                                appendConsoleLine("Model binary written to file: knn_model.joblib.", "success");
+                                appendConsoleLine("System recalibrated. Verification passed.", "success");
+                            } else {
+                                appendConsoleLine(`Recalibration failed: ${data.error}`, "error");
+                            }
+                            retrainBtn.disabled = false;
+                            retrainBtn.innerHTML = originalHtml;
+                        })
+                        .catch(err => {
+                            console.error("ML retrain request failed:", err);
+                            appendConsoleLine(`Pipeline error: ${err.message}`, "error");
+                            retrainBtn.disabled = false;
+                            retrainBtn.innerHTML = originalHtml;
+                        });
+                    }, 600);
+                });
+            }
+
             // Play hover chimes
-            const buttons = document.querySelectorAll(".btn, th.sortable");
+            const buttons = document.querySelectorAll(".btn, th.sortable, .admin-tab-btn, .edit-char-btn, .delete-char-btn");
             buttons.forEach(btn => {
                 btn.addEventListener("mouseenter", () => {
                     if (typeof parent !== 'undefined' && parent.soundEffects) {

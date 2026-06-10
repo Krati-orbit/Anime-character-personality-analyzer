@@ -1,8 +1,20 @@
+# ==============================================================================
+# MODEL CONFIGURATION & PREDICTION ENGINE (model.py)
+# This file defines the 10-dimensional traits, the character prototypes, the
+# questions schema, and computes similarity scores using Cosine Similarity.
+# ==============================================================================
+
 import numpy as np
 import joblib
 import os
+import json
 
-# Define the 10 personality dimensions used as the numerical feature vector
+# ------------------------------------------------------------------------------
+# THE 10 PERSONALITY DIMENSIONS (Feature Space)
+# Every user profile and character is represented as a numerical vector:
+# [Extraversion, Intellect, Discipline, Empathy, Determination, Aggression,
+#  Optimism, Mysteriousness, Pride, Sacrifice] with scores ranging from 0.0 to 1.0.
+# ------------------------------------------------------------------------------
 TRAIT_LABELS = [
     "Extraversion",     # Loud, Energetic, Outgoing vs. Calm, Quiet
     "Intellect",        # Genius, Strategic, Calculative vs. Simple, Carefree
@@ -16,18 +28,37 @@ TRAIT_LABELS = [
     "Sacrifice"         # Sacrificing, Protective vs. Self-preserving
 ]
 
-# Character prototype vectors (scale 0.0 to 1.0)
-CHARACTER_PROTOTYPES = {
-    "naruto": [1.0, 0.2, 0.3, 0.9, 1.0, 0.7, 1.0, 0.1, 0.4, 0.8],
-    "itachi": [0.1, 1.0, 0.9, 0.8, 0.8, 0.4, 0.2, 1.0, 0.5, 1.0],
-    "goku":   [0.8, 0.1, 0.6, 0.8, 0.9, 1.0, 0.9, 0.1, 0.6, 0.7],
-    "light":  [0.5, 1.0, 0.9, 0.1, 0.9, 0.5, 0.4, 0.8, 1.0, 0.1],
-    "luffy":  [0.9, 0.1, 0.2, 0.9, 1.0, 0.8, 1.0, 0.1, 0.5, 0.7],
-    "levi":   [0.2, 0.8, 1.0, 0.7, 0.9, 0.9, 0.2, 0.7, 0.4, 0.9]
-}
+# ------------------------------------------------------------------------------
+# CHARACTER PROTOTYPES (Centroids in the 10D space)
+# These represent the 'ideal' trait scores for each counterpart.
+# They act as the center of gravity for synthetic training data generation.
+# Dynamically loaded from characters.json.
+# ------------------------------------------------------------------------------
+CHARACTER_PROTOTYPES = {}
 
-# The 10 quiz questions. Each has 4 options.
-# Each option maps to a specific 10-dimensional trait vector.
+def reload_prototypes():
+    """Reloads character prototypes from characters.json in-place."""
+    CHARACTER_PROTOTYPES.clear()
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    CHARACTERS_FILE = os.path.join(current_dir, "characters.json")
+    try:
+        if os.path.exists(CHARACTERS_FILE):
+            with open(CHARACTERS_FILE, "r", encoding="utf-8") as f:
+                db = json.load(f)
+                for slug, data in db.items():
+                    if "vector" in data:
+                        CHARACTER_PROTOTYPES[slug] = data["vector"]
+    except Exception as e:
+        print(f"Error loading prototypes in model.py: {e}")
+
+# Initial load
+reload_prototypes()
+
+# ------------------------------------------------------------------------------
+# QUIZ QUESTIONS SCHEMATICS
+# Each of the 10 questions has 4 options.
+# Each option is mapped to a 10D vector representing the trait influence.
+# ------------------------------------------------------------------------------
 QUESTIONS = [
     {
         "id": 1,
@@ -251,6 +282,10 @@ QUESTIONS = [
     }
 ]
 
+# ------------------------------------------------------------------------------
+# FUNCTION: get_user_vector
+# Averages the 10D vectors of all selected quiz answers.
+# ------------------------------------------------------------------------------
 def get_user_vector(answer_indices):
     """
     Given a list of 10 answer indices (0-3), calculate the average 10-dimensional trait vector.
@@ -259,58 +294,75 @@ def get_user_vector(answer_indices):
         raise ValueError("Exactly 10 answers must be provided.")
     
     vectors = []
+    # Loop through each question index and the selected option index
     for q_idx, opt_idx in enumerate(answer_indices):
         if not (0 <= opt_idx <= 3):
             raise ValueError(f"Invalid option index {opt_idx} at question {q_idx + 1}")
+        # Fetch the option's 10D vector
         vectors.append(QUESTIONS[q_idx]["options"][opt_idx]["vector"])
     
-    # Return the average along the features dimension (axis 0)
+    # Return the mean average vector along the traits column axis (axis 0)
+    # This results in a final user vector representing their composite score in all 10 traits.
     return np.mean(vectors, axis=0)
 
+
+# ------------------------------------------------------------------------------
+# FUNCTION: predict_character
+# Queries the trained KNN model to classify the user's vector,
+# then uses Cosine Similarity to calculate the compatibility percentage.
+# ------------------------------------------------------------------------------
 def predict_character(user_vector):
     """
     Predict the matched character name and match percentage using similarity metrics.
     Loads the trained KNN model to classify, then calculates cosine similarity for match percentage.
     """
-    # Define model file path
     current_dir = os.path.dirname(os.path.abspath(__file__))
     model_path = os.path.join(current_dir, "knn_model.joblib")
     
     if not os.path.exists(model_path):
         raise FileNotFoundError("Trained KNN model not found. Please run train.py first.")
     
-    # Load model
+    # Load serialized model details
     model_data = joblib.load(model_path)
     knn_model = model_data["model"]
     class_names = model_data["class_names"]
     
-    # Predict using KNN (input needs to be 2D shape (1, 10))
+    # Reshape 1D vector to 2D shape (1, 10) for Scikit-Learn input compatibility
     user_vector_2d = user_vector.reshape(1, -1)
+    
+    # Query KNN to find the nearest matched prototype index
     prediction_idx = knn_model.predict(user_vector_2d)[0]
     predicted_slug = class_names[prediction_idx]
     
-    # Calculate match percentage (Cosine Similarity or Euclidean Distance Similarity)
-    # Cosine Similarity is highly descriptive for normalized vector directions.
+    # --- COSINE SIMILARITY MATH ---
+    # Formula: similarity = (A . B) / (||A|| * ||B||)
+    # Cosine Similarity is highly descriptive because it measures the angle/direction
+    # of the personality profile instead of just the absolute scale size.
     proto_vector = np.array(CHARACTER_PROTOTYPES[predicted_slug])
     
-    dot_product = np.dot(user_vector, proto_vector)
-    norm_user = np.linalg.norm(user_vector)
-    norm_proto = np.linalg.norm(proto_vector)
+    dot_product = np.dot(user_vector, proto_vector)      # A . B
+    norm_user = np.linalg.norm(user_vector)              # ||A|| (magnitude)
+    norm_proto = np.linalg.norm(proto_vector)            # ||B|| (magnitude)
     
     if norm_user == 0 or norm_proto == 0:
         cosine_similarity = 0.0
     else:
         cosine_similarity = dot_product / (norm_user * norm_proto)
         
-    # Standardize to percentage
+    # Scale decimal to integer percentage
     match_percentage = int(cosine_similarity * 100)
     
-    # Let's clip to a realistic range (e.g. 50% to 99% for better feel)
+    # Clip to standard display boundaries (e.g. 50% to 99% for a better feel)
     match_percentage = max(50, min(99, match_percentage))
     
     return predicted_slug, match_percentage
 
 
+# ------------------------------------------------------------------------------
+# FUNCTION: get_rival_character
+# Evaluates which character has the lowest Cosine Similarity (widest angle)
+# relative to the user's vector to find their personality rival.
+# ------------------------------------------------------------------------------
 def get_rival_character(user_vector):
     """
     Find the character with the lowest cosine similarity to the user's vector.
@@ -319,6 +371,7 @@ def get_rival_character(user_vector):
     lowest_similarity = 2.0
     rival_slug = None
     
+    # Iterate through all prototypes to find the minimum similarity coefficient
     for slug, proto_list in CHARACTER_PROTOTYPES.items():
         proto_vector = np.array(proto_list)
         dot_product = np.dot(user_vector, proto_vector)
@@ -334,9 +387,9 @@ def get_rival_character(user_vector):
             lowest_similarity = sim
             rival_slug = slug
             
-    # Calculate a compatibility match score for rival (should be low, e.g. 20-50%)
+    # Scale decimal to integer percentage (representing low similarity)
     rival_match_score = int(lowest_similarity * 100)
-    # Clip rival match percentage to 20-50% for good feel
+    # Clip rival match percentage to 20-50% boundaries for rendering
     rival_match_score = max(20, min(50, rival_match_score))
     
     return rival_slug, rival_match_score

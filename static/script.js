@@ -1,9 +1,14 @@
 // ==========================================================================
-// ANIME PERSONALITY ANALYZER - FRONTEND CONTROLLER
-// Handles dynamic rendering, smooth transitions, loading spinner sequence,
-// Web Audio API sound effects synth, and AJAX communications.
+// ANIME PERSONALITY ANALYZER - FRONTEND CONTROLLER (script.js)
+// Handles dynamic rendering, screen transitions, loading animations,
+// Web Audio synthesizer feedback, and async API communications.
 // ==========================================================================
 
+// ------------------------------------------------------------------------------
+// STATIC QUIZ QUESTIONS SCHEMA
+// Contains text labels shown on the frontend. The corresponding 10D trait 
+// vectors are stored on the backend (model.py) for security and ML alignment.
+// ------------------------------------------------------------------------------
 const QUESTIONS = [
     {
         question: "How do you handle a big problem?",
@@ -99,18 +104,22 @@ const QUESTIONS = [
 
 // ==========================================================================
 // WEB AUDIO API - SOUND SYNTHESIS ENGINE
-// Generates interface feedback sounds on the fly. No asset loading required.
+// Generates interface feedback frequencies on-the-fly. Eliminates lag from 
+// loading static audio asset files.
 // ==========================================================================
 
 let audioCtx = null;
+// Load sound preference toggle state from browser localStorage
 let soundEnabled = localStorage.getItem("soundEnabled") !== "false";
 
+// Lazy initialize the browser AudioContext to satisfy autoplay blocking policies
 function initAudio() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 }
 
+// Low-level synthesizer sound helper using oscillators and gain envelopes
 function playSynthSound(freqStart, freqEnd, type, volume, duration) {
     if (!soundEnabled) return;
     try {
@@ -122,12 +131,15 @@ function playSynthSound(freqStart, freqEnd, type, volume, duration) {
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         
-        osc.type = type; // 'sine', 'triangle', 'sawtooth', 'square'
+        osc.type = type; // 'sine' (smooth), 'triangle' (chime), 'sawtooth', 'square'
         osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
+        
+        // Frequency sweep transition ramp
         if (freqEnd && freqEnd !== freqStart) {
             osc.frequency.exponentialRampToValueAtTime(freqEnd, audioCtx.currentTime + duration);
         }
         
+        // Exponential decay envelope (smooth volume drop off without audio clicking)
         gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
         
@@ -141,13 +153,14 @@ function playSynthSound(freqStart, freqEnd, type, volume, duration) {
     }
 }
 
+// Preset sound types mapped to UX events
 const soundEffects = {
     hover: () => playSynthSound(900, 1100, 'triangle', 0.015, 0.04),
     select: () => playSynthSound(500, 750, 'sine', 0.08, 0.12),
     transition: () => playSynthSound(200, 480, 'sine', 0.1, 0.5)
 };
 
-// DOM Elements
+// DOM Elements Selection
 const profileScreen = document.getElementById("profile-screen");
 const profileForm = document.getElementById("profile-form");
 const usernameInput = document.getElementById("username-input");
@@ -169,11 +182,11 @@ const soundToggleBtn = document.getElementById("sound-toggle-btn");
 const soundIcon = document.getElementById("sound-icon");
 const soundStatusText = soundToggleBtn ? soundToggleBtn.querySelector(".sound-status-text") : null;
 
-// App State
+// App State Variables
 let currentQuestionIndex = 0;
-const userAnswers = [];
+const userAnswers = []; // Stores the indices (0-3) selected for each question
 
-// Audio toggle button functionality
+// Update sound toggle button states on UI
 function updateAudioButtonUI() {
     if (soundToggleBtn) {
         if (soundEnabled) {
@@ -188,6 +201,7 @@ function updateAudioButtonUI() {
     }
 }
 
+// Sound toggle button listener
 if (soundToggleBtn) {
     soundToggleBtn.addEventListener("click", () => {
         soundEnabled = !soundEnabled;
@@ -199,7 +213,7 @@ if (soundToggleBtn) {
     });
 }
 
-// Inject welcome greeting in landing screen
+// Render user welcome banner on landing page
 function injectPersonalizedGreeting(name) {
     const subtitleEl = landingScreen.querySelector(".subtitle");
     if (subtitleEl) {
@@ -213,22 +227,36 @@ function injectPersonalizedGreeting(name) {
     }
 }
 
-// Check if user profile is already cached in session storage on page load
+// Initial Configuration on Window Load
 window.addEventListener("DOMContentLoaded", () => {
     updateAudioButtonUI();
     
-    // Bind hover sounds to character hover cards
+    // Bind hover sound triggers and click events to character list cards (Wiki)
     const cards = document.querySelectorAll(".char-preview-card");
     cards.forEach(card => {
         card.addEventListener("mouseenter", () => soundEffects.hover());
+        card.addEventListener("click", () => {
+            const slug = card.getAttribute("data-slug");
+            if (slug && typeof CHARACTERS_DB !== 'undefined' && CHARACTERS_DB[slug]) {
+                openWikiModal(slug);
+            }
+        });
     });
     
-    // Bind hover sound to profile submit button & start button
+    // Bind Wiki modal close actions
+    const wikiCloseBtn = document.getElementById("wiki-modal-close-btn");
+    const wikiBackdrop = document.getElementById("wiki-modal-backdrop");
+    if (wikiCloseBtn) wikiCloseBtn.addEventListener("click", closeWikiModal);
+    if (wikiBackdrop) wikiBackdrop.addEventListener("click", closeWikiModal);
+    
+    // Bind hover sound triggers to general interface buttons
     const buttons = document.querySelectorAll(".btn, .sound-toggle-btn");
     buttons.forEach(btn => {
         btn.addEventListener("mouseenter", () => soundEffects.hover());
     });
 
+    // Check if user profile is already saved in local storage.
+    // If it exists, skip registration and jump directly to landing page.
     const cachedName = localStorage.getItem("userName");
     const cachedAge = localStorage.getItem("userAge");
     const cachedGender = localStorage.getItem("userGender");
@@ -242,7 +270,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Profile Form Submit Action
+// Profile Form Submit Action (Saves profile and unlocks landing screen)
 if (profileForm) {
     profileForm.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -256,17 +284,15 @@ if (profileForm) {
             return;
         }
         
-        // Save details in browser local storage for persistence across visits
+        // Cache user details locally
         localStorage.setItem("userName", name);
         localStorage.setItem("userAge", age);
         localStorage.setItem("userGender", gender);
         
-        // Play transition sound
         soundEffects.transition();
-        
         injectPersonalizedGreeting(name);
         
-        // Transition screens
+        // Fade out profile form, fade in landing cards
         profileScreen.classList.remove("fade-in");
         profileScreen.classList.add("hidden");
         
@@ -275,20 +301,20 @@ if (profileForm) {
     });
 }
 
-// Start Quiz Action
+// Start Quiz Button listener
 if (startBtn) {
     startBtn.addEventListener("click", () => {
         soundEffects.transition();
         landingScreen.classList.add("hidden");
-        // Remove hidden and trigger fade-in
         quizScreen.classList.remove("hidden");
         quizScreen.classList.add("fade-in");
         renderQuestion();
     });
 }
 
-// Render the active question with options
+// Renders active question details dynamically
 function renderQuestion() {
+    // If all questions are answered, submit user responses
     if (currentQuestionIndex >= QUESTIONS.length) {
         submitQuiz();
         return;
@@ -296,24 +322,24 @@ function renderQuestion() {
     
     const currentQuestion = QUESTIONS[currentQuestionIndex];
     
-    // Update question metadata headers
+    // Update headers
     questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${QUESTIONS.length}`;
     
-    // Update progress bar percentage
+    // Update progress bar width
     const progressPercent = ((currentQuestionIndex + 1) / QUESTIONS.length) * 100;
     progressBarFill.style.width = `${progressPercent}%`;
     
-    // Update text
+    // Inject question text
     questionText.textContent = currentQuestion.question;
     
-    // Clear and build options list
+    // Clear old options and generate new option buttons
     optionsContainer.innerHTML = "";
     currentQuestion.options.forEach((optionText, idx) => {
         const btn = document.createElement("button");
         btn.className = "option-btn";
         btn.textContent = optionText;
         
-        // Audio synthesis hover & click events
+        // Audio synthesis events
         btn.addEventListener("mouseenter", () => soundEffects.hover());
         btn.addEventListener("click", () => {
             soundEffects.select();
@@ -324,21 +350,20 @@ function renderQuestion() {
     });
 }
 
-// Handle clicking of option buttons
+// Handle Option Selection and screen slide-out effects
 function handleOptionSelection(selectedIndex, buttonElement) {
-    // Disable all option clicks immediately to prevent double tapping
+    // Block multiple clicks on options during slide-out
     const allButtons = optionsContainer.querySelectorAll(".option-btn");
     allButtons.forEach(btn => btn.style.pointerEvents = "none");
     
-    // Add highlighting class
+    // Highlight clicked option button
     buttonElement.classList.add("selected");
     
-    // Save response
+    // Append answer index to user profile
     userAnswers.push(selectedIndex);
     
-    // Delay transition slightly to let the highlight animation play out beautifully
+    // Wait for highlight style to render, then transition questions
     setTimeout(() => {
-        // Apply fade-out transition classes
         quizScreen.classList.remove("fade-in");
         quizScreen.style.opacity = 0;
         quizScreen.style.transform = "translateY(-10px)";
@@ -348,23 +373,23 @@ function handleOptionSelection(selectedIndex, buttonElement) {
             renderQuestion();
             
             if (currentQuestionIndex < QUESTIONS.length) {
-                // Restore styles and trigger fade-in
+                // Restore classes and fade in next question
                 quizScreen.style.opacity = "";
                 quizScreen.style.transform = "";
                 quizScreen.classList.add("fade-in");
             }
-        }, 200); // Time of slide out transition
-    }, 250); // Time user gets to see highlight
+        }, 200);
+    }, 250);
 }
 
-// Submit Quiz and triggers loading spinner screen
+// Submits the responses to the Flask backend prediction API
 function submitQuiz() {
     soundEffects.transition();
     
-    // Reveal full-screen loading overlay
+    // Unhide the loading telemetry dashboard
     loadingOverlay.classList.remove("hidden");
     
-    // Dynamic status text sequence
+    // Sequence of animations to simulate computing ML coordinates
     const statuses = [
         { title: "Chakra Assembly", status: "Tuning your spiritual energy...", delay: 0 },
         { title: "Trait Vector Modeling", status: "Mapping answers to 10-dimensional personality traits...", delay: 500 },
@@ -378,14 +403,14 @@ function submitQuiz() {
         }, step.delay);
     });
     
-    const minLoadingTime = 1600; // Minimum time loading spinner shows (1.6s)
+    const minLoadingTime = 1600; // Force spinner to show for at least 1.6s for UX polish
     const startTime = Date.now();
     
     const name = localStorage.getItem("userName") || "User";
     const age = localStorage.getItem("userAge") || "N/A";
     const gender = localStorage.getItem("userGender") || "N/A";
 
-    // Submit post request to backend API
+    // AJAX call to prediction server endpoint
     fetch("/predict", {
         method: "POST",
         headers: {
@@ -409,10 +434,10 @@ function submitQuiz() {
             const elapsed = Date.now() - startTime;
             const remainingDelay = Math.max(0, minLoadingTime - elapsed);
             
-            // Save computed user vector for rendering the Radar Chart
+            // Save computed user vector for rendering the Radar Chart on results page
             sessionStorage.setItem("userVector", JSON.stringify(data.user_vector));
             
-            // Wait for remaining loading time to finish before redirecting (avoids visual jarring)
+            // Redirect to results page passing query parameters
             setTimeout(() => {
                 window.location.href = `/result?char=${data.character}&score=${data.score}&rival=${data.rival}&rival_score=${data.rival_score}`;
             }, remainingDelay);
@@ -430,11 +455,188 @@ function submitQuiz() {
     });
 }
 
-// Helper to reset quiz state in case of failure
+// Reset quiz state to begin again
 function resetQuiz() {
     currentQuestionIndex = 0;
     userAnswers.length = 0;
     quizScreen.classList.add("hidden");
     landingScreen.classList.remove("hidden");
     landingScreen.classList.add("fade-in");
+}
+
+// ==========================================================================
+// CHARACTER WIKI MODAL SYSTEM
+// Handles rendering individual character details and radar charts in a modal.
+// ==========================================================================
+
+let wikiChartInstance = null;
+
+function openWikiModal(slug) {
+    if (typeof soundEffects !== 'undefined' && soundEffects.select) {
+        soundEffects.select();
+    }
+    
+    const char = CHARACTERS_DB[slug];
+    if (!char) return;
+    
+    const modal = document.getElementById("wiki-modal");
+    const card = document.getElementById("wiki-modal-card");
+    
+    // Set custom accent color variables
+    card.style.setProperty("--accent-color", char.color);
+    
+    // Convert hex to RGB for overlays
+    let hex = char.color.replace("#", "");
+    if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    const r = parseInt(hex.substring(0, 2), 16) || 255;
+    const g = parseInt(hex.substring(2, 4), 16) || 255;
+    const b = parseInt(hex.substring(4, 6), 16) || 255;
+    const rgb = `${r}, ${g}, ${b}`;
+    card.style.setProperty("--accent-glow", `rgba(${rgb}, 0.25)`);
+    
+    // Bind simple fields
+    document.getElementById("wiki-char-name").textContent = char.name;
+    document.getElementById("wiki-char-anime").textContent = `from ${char.anime}`;
+    document.getElementById("wiki-char-emoji").textContent = char.emoji;
+    document.getElementById("wiki-char-description").textContent = char.description;
+    document.getElementById("wiki-char-quote").textContent = char.quote;
+    
+    // Setup image representation
+    const img = document.getElementById("wiki-char-image");
+    const fallback = document.getElementById("wiki-char-fallback");
+    const fallbackEmoji = document.getElementById("wiki-char-fallback-emoji");
+    
+    fallback.style.display = "none";
+    img.style.display = "block";
+    fallbackEmoji.textContent = char.emoji;
+    
+    if (char.image && char.image.trim() !== "") {
+        img.src = `/image_proxy?url=${encodeURIComponent(char.image.trim())}`;
+    } else {
+        img.style.display = "none";
+        fallback.style.display = "flex";
+    }
+    
+    // Populate traits
+    const traitsContainer = document.getElementById("wiki-char-traits");
+    traitsContainer.innerHTML = "";
+    if (char.traits && Array.isArray(char.traits)) {
+        char.traits.forEach(trait => {
+            const badge = document.createElement("span");
+            badge.className = "trait-badge";
+            badge.textContent = trait;
+            badge.style.background = `rgba(${rgb}, 0.15)`;
+            badge.style.borderColor = char.color;
+            traitsContainer.appendChild(badge);
+        });
+    }
+    
+    // Render 10D radar chart
+    renderWikiRadarChart(char, rgb);
+    
+    // Trigger modal visibility animation
+    modal.classList.remove("hidden");
+    modal.offsetHeight; // trigger reflow
+    modal.classList.add("active");
+}
+
+function closeWikiModal() {
+    if (typeof soundEffects !== 'undefined' && soundEffects.hover) {
+        soundEffects.hover();
+    }
+    const modal = document.getElementById("wiki-modal");
+    modal.classList.remove("active");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        // Clear chart instance to avoid redraw leaks
+        if (wikiChartInstance) {
+            wikiChartInstance.destroy();
+            wikiChartInstance = null;
+        }
+    }, 300);
+}
+
+function renderWikiRadarChart(char, rgb) {
+    const canvas = document.getElementById("wiki-radar-chart");
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (wikiChartInstance) {
+        wikiChartInstance.destroy();
+    }
+    
+    const traitLabels = [
+        "Extraversion", "Intellect", "Discipline", "Empathy", "Determination",
+        "Aggression", "Optimism", "Mysteriousness", "Pride", "Sacrifice"
+    ];
+    
+    const charVector = char.vector || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    
+    wikiChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: traitLabels,
+            datasets: [
+                {
+                    label: `${char.name} Traits`,
+                    data: charVector,
+                    backgroundColor: `rgba(${rgb}, 0.22)`,
+                    borderColor: char.color,
+                    borderWidth: 2,
+                    pointBackgroundColor: char.color,
+                    pointBorderColor: '#0a0a0a',
+                    pointHoverBackgroundColor: char.color,
+                    pointHoverBorderColor: char.color,
+                    pointRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: {
+                        color: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    pointLabels: {
+                        color: '#b0b0b0',
+                        font: {
+                            family: "'Outfit', 'Inter', sans-serif",
+                            size: 10,
+                            weight: '500'
+                        }
+                    },
+                    ticks: {
+                        display: false,
+                        stepSize: 0.2
+                    },
+                    min: 0,
+                    max: 1.0
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e0e0e0',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${(context.raw * 100).toFixed(0)}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
